@@ -7,13 +7,13 @@ Endkundenpreis, führt gleiche Reifen zusammen und markiert das günstigste Ange
   Testnachweis: [docs/testing/erster-build.tdd.md](docs/testing/erster-build.tdd.md)
 - Kein KI-Einsatz zur Laufzeit, kein automatisches Bestellen, Zugangsdaten nur serverseitig.
 
-| Ordner | Inhalt |
-|---|---|
-| `src/` | Oberfläche (React + Vite + TypeScript) |
+| Ordner                        | Inhalt                                                             |
+| ----------------------------- | ------------------------------------------------------------------ |
+| `src/`                        | Oberfläche (React + Vite + TypeScript)                             |
 | `supabase/functions/_shared/` | Shop-Adapter, Preisberechnung, Matching, Handler (laufzeitneutral) |
-| `supabase/functions/search/` | Edge Function (Deno) |
-| `scripts/` | lokaler Dev-Server, Fixture-Anonymisierung |
-| `test/` | Backend-Tests und anonymisierte Fixtures |
+| `supabase/functions/search/`  | Edge Function (Deno)                                               |
+| `scripts/`                    | lokaler Dev-Server, Fixture-Anonymisierung                         |
+| `test/`                       | Backend-Tests und anonymisierte Fixtures                           |
 
 ## Lokal starten
 
