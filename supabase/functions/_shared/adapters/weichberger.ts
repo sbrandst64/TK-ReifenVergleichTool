@@ -33,7 +33,8 @@ export function isAllowedWeichbergerUrl(url: URL): boolean {
 }
 
 const clean = (s: string | null | undefined) => (s ?? '').replace(/\s+/g, ' ').trim()
-const layout = (what: string) => new AdapterError('LAYOUT_CHANGED', `Weichberger: ${what} nicht gefunden`)
+const layout = (what: string) =>
+  new AdapterError('LAYOUT_CHANGED', `Weichberger: ${what} nicht gefunden`)
 
 function centsFromEuroText(text: string): number | null {
   const m = text.match(/(\d{1,3}(?:\.\d{3})*|\d+),(\d{2})/)
@@ -67,7 +68,9 @@ export function parseWeichbergerResults(html: string): ShopOffer[] {
     }
 
     const id = form.querySelector('input[name="itemID"]')?.getAttribute('value')
-    const description = clean(form.querySelector('input[name="description"]')?.getAttribute('value'))
+    const description = clean(
+      form.querySelector('input[name="description"]')?.getAttribute('value'),
+    )
     const brand = labels.get('Hersteller')
     const net = centsFromEuroText(article.querySelector('#netprice')?.textContent ?? '')
     if (!id) throw layout('Artikel-ID')
@@ -179,16 +182,22 @@ async function searchCombo(
     )
     if (!/"success"\s*:\s*true/.test(started.text)) throw layout('Suchergebnis')
     const result = ensureLoggedIn(await session.get(`${base}/Items/SearchResult`, { xhr: true }))
-    for (const o of parseWeichbergerResults(result.text)) if (!found.has(o.shopArticleId)) found.set(o.shopArticleId, o)
+    for (const o of parseWeichbergerResults(result.text))
+      if (!found.has(o.shopArticleId)) found.set(o.shopArticleId, o)
     if (page === 0) {
-      pages = parseWeichbergerPageCount((await session.get(`${base}/Items/SearchFooter`, { xhr: true })).text)
+      pages = parseWeichbergerPageCount(
+        (await session.get(`${base}/Items/SearchFooter`, { xhr: true })).text,
+      )
     }
     if (found.size >= maxOffers) break
   }
   return [...found.values()]
 }
 
-export async function searchWeichberger(query: SearchQuery, deps: AdapterDeps): Promise<ShopOffer[]> {
+export async function searchWeichberger(
+  query: SearchQuery,
+  deps: AdapterDeps,
+): Promise<ShopOffer[]> {
   if (!deps.credentials) throw new AdapterError('LOGIN_FAILED', 'Weichberger: Zugangsdaten fehlen')
   const session = new ShopSession({
     baseUrl: WEICHBERGER_BASE,

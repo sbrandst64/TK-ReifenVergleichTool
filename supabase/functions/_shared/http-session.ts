@@ -59,7 +59,10 @@ export class ShopSession {
     let currentForm = form
     for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
       this.assertAllowed(url, currentForm)
-      const headers: Record<string, string> = { 'user-agent': this.opts.userAgent ?? DEFAULT_UA, accept: '*/*' }
+      const headers: Record<string, string> = {
+        'user-agent': this.opts.userAgent ?? DEFAULT_UA,
+        accept: '*/*',
+      }
       const cookie = [...this.jar].map(([k, v]) => `${k}=${v}`).join('; ')
       if (cookie) headers.cookie = cookie
       if (currentForm) headers['content-type'] = 'application/x-www-form-urlencoded; charset=UTF-8'
@@ -78,7 +81,10 @@ export class ShopSession {
         await res.body?.cancel()
         url = new URL(location, url)
         if (url.origin !== this.origin) {
-          throw new AdapterError('FORBIDDEN_ENDPOINT', 'Weiterleitung auf einen fremden Server abgelehnt')
+          throw new AdapterError(
+            'FORBIDDEN_ENDPOINT',
+            'Weiterleitung auf einen fremden Server abgelehnt',
+          )
         }
         if (res.status !== 307 && res.status !== 308) {
           currentMethod = 'GET'
@@ -101,7 +107,10 @@ export class ShopSession {
 
   private assertAllowed(url: URL, form?: Record<string, string>): void {
     if (url.origin !== this.origin || !this.opts.isAllowed(url, form)) {
-      throw new AdapterError('FORBIDDEN_ENDPOINT', `Nicht freigegebener Shop-Endpunkt: ${url.pathname}`)
+      throw new AdapterError(
+        'FORBIDDEN_ENDPOINT',
+        `Nicht freigegebener Shop-Endpunkt: ${url.pathname}`,
+      )
     }
   }
 
@@ -144,7 +153,10 @@ function isExpired(attrs: string[]): boolean {
 }
 
 async function decode(res: Response): Promise<string> {
-  const charset = (res.headers.get('content-type') ?? '').match(/charset=([^;]+)/i)?.[1]?.trim().toLowerCase()
+  const charset = (res.headers.get('content-type') ?? '')
+    .match(/charset=([^;]+)/i)?.[1]
+    ?.trim()
+    .toLowerCase()
   const latin = charset === 'iso-8859-1' || charset === 'latin1' || charset === 'windows-1252'
   return new TextDecoder(latin ? 'windows-1252' : 'utf-8').decode(await res.arrayBuffer())
 }

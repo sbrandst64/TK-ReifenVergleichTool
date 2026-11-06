@@ -35,6 +35,7 @@ createServer(async (req, res) => {
 }).listen(port, () => {
   console.log(`Dev-API läuft: http://localhost:${port}/functions/v1/search`)
   for (const name of ['WERKSTATT_CODE', 'WEICHBERGER_USER', 'GOEGGEL_USER']) {
-    if (!process.env[name]) console.log(`  Hinweis: ${name} ist nicht gesetzt (supabase/functions/.env)`)
+    if (!process.env[name])
+      console.log(`  Hinweis: ${name} ist nicht gesetzt (supabase/functions/.env)`)
   }
 })

@@ -10,7 +10,10 @@ const json = (body: unknown, status = 200) =>
 describe('createSearch', () => {
   it('posts shop and query with the workshop code', async () => {
     const fetchFn = vi.fn(async () => json({ shop: 'goeggel', offers: [], error: null }))
-    const search = createSearch('https://api.example/functions/v1', fetchFn as unknown as typeof fetch)
+    const search = createSearch(
+      'https://api.example/functions/v1',
+      fetchFn as unknown as typeof fetch,
+    )
     const res = await search('goeggel', query, 'abc')
     expect(res).toEqual({ shop: 'goeggel', offers: [], error: null })
     const [url, init] = fetchFn.mock.calls[0] as unknown as [string, RequestInit]
@@ -37,7 +40,10 @@ describe('createSearch', () => {
   })
 
   it('turns non-JSON answers into an error result', async () => {
-    const search = createSearch('x', (async () => new Response('<html>502</html>', { status: 502 })) as typeof fetch)
+    const search = createSearch(
+      'x',
+      (async () => new Response('<html>502</html>', { status: 502 })) as typeof fetch,
+    )
     expect((await search('goeggel', query, 'abc')).error?.code).toBe('UPSTREAM_ERROR')
   })
 })

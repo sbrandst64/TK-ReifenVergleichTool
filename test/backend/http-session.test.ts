@@ -6,7 +6,11 @@ import { fakeFetch, htmlResponse, redirectResponse } from '../helpers/fake-fetch
 const BASE = 'https://shop.example'
 const allowAll = () => true
 
-function session(fetchFn: typeof fetch, isAllowed: (u: URL) => boolean = allowAll, timeoutMs = 2000) {
+function session(
+  fetchFn: typeof fetch,
+  isAllowed: (u: URL) => boolean = allowAll,
+  timeoutMs = 2000,
+) {
   return new ShopSession({ baseUrl: BASE, isAllowed, fetchFn, timeoutMs })
 }
 
@@ -23,7 +27,10 @@ async function codeOf(p: Promise<unknown>): Promise<string> {
 describe('ShopSession', () => {
   it('stores cookies and sends them on later requests', async () => {
     const { fetchFn, calls } = fakeFetch([
-      { path: '/a', respond: () => htmlResponse('a', { cookies: ['sid=1; path=/; HttpOnly', 'x=2'] }) },
+      {
+        path: '/a',
+        respond: () => htmlResponse('a', { cookies: ['sid=1; path=/; HttpOnly', 'x=2'] }),
+      },
       { path: '/b', respond: () => htmlResponse('b') },
     ])
     const s = session(fetchFn)
@@ -39,7 +46,9 @@ describe('ShopSession', () => {
       {
         path: '/b',
         respond: () =>
-          htmlResponse('b', { cookies: ['sid=; Max-Age=0', 'old=1; expires=Thu, 01 Jan 1970 00:00:01 GMT'] }),
+          htmlResponse('b', {
+            cookies: ['sid=; Max-Age=0', 'old=1; expires=Thu, 01 Jan 1970 00:00:01 GMT'],
+          }),
       },
     ])
     const s = session(fetchFn)
@@ -71,13 +80,17 @@ describe('ShopSession', () => {
   })
 
   it('marks XHR requests', async () => {
-    const { fetchFn, calls } = fakeFetch([{ method: 'POST', path: '/ajax', respond: () => htmlResponse('{}') }])
+    const { fetchFn, calls } = fakeFetch([
+      { method: 'POST', path: '/ajax', respond: () => htmlResponse('{}') },
+    ])
     await session(fetchFn).post('/ajax', { func: 'x' }, { xhr: true })
     expect(calls[0].headers.get('x-requested-with')).toBe('XMLHttpRequest')
   })
 
   it('AC21: refuses a non-allowed endpoint without contacting the shop', async () => {
-    const { fetchFn, calls } = fakeFetch([{ path: '/checkout', respond: () => htmlResponse('ordered') }])
+    const { fetchFn, calls } = fakeFetch([
+      { path: '/checkout', respond: () => htmlResponse('ordered') },
+    ])
     const s = session(fetchFn, (u) => u.pathname !== '/checkout')
     expect(await codeOf(s.get('/checkout'))).toBe('FORBIDDEN_ENDPOINT')
     expect(calls).toHaveLength(0)
@@ -94,7 +107,9 @@ describe('ShopSession', () => {
   })
 
   it('refuses redirects to another host', async () => {
-    const { fetchFn } = fakeFetch([{ path: '/ok', respond: () => redirectResponse('https://evil.example/x') }])
+    const { fetchFn } = fakeFetch([
+      { path: '/ok', respond: () => redirectResponse('https://evil.example/x') },
+    ])
     expect(await codeOf(session(fetchFn).get('/ok'))).toBe('FORBIDDEN_ENDPOINT')
   })
 
@@ -128,7 +143,8 @@ describe('ShopSession', () => {
     const { fetchFn } = fakeFetch([
       {
         path: '/l',
-        respond: () => new Response(latin1, { headers: { 'content-type': 'text/html; charset=iso-8859-1' } }),
+        respond: () =>
+          new Response(latin1, { headers: { 'content-type': 'text/html; charset=iso-8859-1' } }),
       },
     ])
     expect((await session(fetchFn).get('/l')).text).toBe('Göggel')

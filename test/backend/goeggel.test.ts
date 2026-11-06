@@ -44,7 +44,8 @@ function shop(opts: { nurvfgInitiallyOff?: boolean; detailStatus?: number } = {}
   const routes: FakeRoute[] = [
     {
       path: '/login.php',
-      respond: () => htmlResponse(LOGIN_PAGE, { cookies: [`sess-shop=${SESS}; Max-Age=28800; path=/`] }),
+      respond: () =>
+        htmlResponse(LOGIN_PAGE, { cookies: [`sess-shop=${SESS}; Max-Age=28800; path=/`] }),
     },
     {
       method: 'POST',
@@ -82,7 +83,8 @@ function shop(opts: { nurvfgInitiallyOff?: boolean; detailStatus?: number } = {}
       method: 'POST',
       path: '/includes/php_ajax/ajax_global.php',
       when: (f) => f.get('func') === 'ladeBildanzeige',
-      respond: () => htmlResponse(DETAIL, { status: opts.detailStatus ?? 200, contentType: UTF8_HTML }),
+      respond: () =>
+        htmlResponse(DETAIL, { status: opts.detailStatus ?? 200, contentType: UTF8_HTML }),
     },
   ]
   return fakeFetch(routes)
@@ -134,7 +136,12 @@ describe('parseGoeggelResults', () => {
 
   it('reads own stock as immediately available', () => {
     const kumho = offers.find((o) => o.shopArticleId === '981016000095204')
-    expect(kumho).toMatchObject({ brand: 'KUMHO', stockImmediate: 184, stockTotal: 184, deliveryNote: 'sofort' })
+    expect(kumho).toMatchObject({
+      brand: 'KUMHO',
+      stockImmediate: 184,
+      stockTotal: 184,
+      deliveryNote: 'sofort',
+    })
   })
 
   it('keeps rows without load index, taking the speed index from the size', () => {
@@ -175,16 +182,32 @@ describe('isAllowedGoeggelUrl', () => {
   it('allows login, search and the read-only AJAX functions', () => {
     expect(isAllowedGoeggelUrl(u('/login.php?m=search'))).toBe(true)
     expect(isAllowedGoeggelUrl(u('/search.php'))).toBe(true)
-    expect(isAllowedGoeggelUrl(u('/includes/php_ajax/ajax_search.php'), { func: 'holeSuchergebnis' })).toBe(true)
-    expect(isAllowedGoeggelUrl(u('/includes/php_ajax/ajax_search.php?sess-shop=1'), { func: 'filtereSuchergebnis' })).toBe(true)
-    expect(isAllowedGoeggelUrl(u('/includes/php_ajax/ajax_global.php'), { func: 'ladeBildanzeige' })).toBe(true)
+    expect(
+      isAllowedGoeggelUrl(u('/includes/php_ajax/ajax_search.php'), { func: 'holeSuchergebnis' }),
+    ).toBe(true)
+    expect(
+      isAllowedGoeggelUrl(u('/includes/php_ajax/ajax_search.php?sess-shop=1'), {
+        func: 'filtereSuchergebnis',
+      }),
+    ).toBe(true)
+    expect(
+      isAllowedGoeggelUrl(u('/includes/php_ajax/ajax_global.php'), { func: 'ladeBildanzeige' }),
+    ).toBe(true)
   })
 
   it('AC21: refuses cart, order and other AJAX functions', () => {
     expect(isAllowedGoeggelUrl(u('/scart.php?site=write&s=1'))).toBe(false)
-    expect(isAllowedGoeggelUrl(u('/includes/php_ajax/ajax_global.php'), { func: 'ladeWkInhalt' })).toBe(false)
-    expect(isAllowedGoeggelUrl(u('/includes/php_ajax/ajax_modalfenster.php'), { func: 'updateWarenkorb' })).toBe(false)
-    expect(isAllowedGoeggelUrl(u('/includes/php_ajax/ajax_search.php'), { func: 'artikelInAngebot' })).toBe(false)
+    expect(
+      isAllowedGoeggelUrl(u('/includes/php_ajax/ajax_global.php'), { func: 'ladeWkInhalt' }),
+    ).toBe(false)
+    expect(
+      isAllowedGoeggelUrl(u('/includes/php_ajax/ajax_modalfenster.php'), {
+        func: 'updateWarenkorb',
+      }),
+    ).toBe(false)
+    expect(
+      isAllowedGoeggelUrl(u('/includes/php_ajax/ajax_search.php'), { func: 'artikelInAngebot' }),
+    ).toBe(false)
     expect(isAllowedGoeggelUrl(new URL('https://evil.example/search.php'))).toBe(false)
   })
 })
@@ -235,7 +258,10 @@ describe('searchGoeggel', () => {
 
   it('AC3/AC3a: passes brand and season (Ganzjahr = allwetter)', async () => {
     const { fetchFn, calls } = shop()
-    const offers = await searchGoeggel(query({ brands: ['MICHELIN'], seasons: ['sommer', 'ganzjahr'] }), deps(fetchFn))
+    const offers = await searchGoeggel(
+      query({ brands: ['MICHELIN'], seasons: ['sommer', 'ganzjahr'] }),
+      deps(fetchFn),
+    )
     const searches = calls.filter((c) => c.form.get('func') === 'holeSuchergebnis')
     expect(searches.map((c) => [c.form.get('hersteller'), c.form.get('saison')])).toEqual([
       ['MICHELIN', 'sommer'],
@@ -252,12 +278,17 @@ describe('searchGoeggel', () => {
 
   it('AC22: wrong credentials → LOGIN_FAILED', async () => {
     const { fetchFn } = shop()
-    const p = searchGoeggel(query(), { ...deps(fetchFn), credentials: { user: 'user', password: 'x' } })
+    const p = searchGoeggel(query(), {
+      ...deps(fetchFn),
+      credentials: { user: 'user', password: 'x' },
+    })
     expect(await codeOf(p)).toBe('LOGIN_FAILED')
   })
 
   it('missing credentials → LOGIN_FAILED', async () => {
     const { fetchFn } = shop()
-    expect(await codeOf(searchGoeggel(query(), { ...deps(fetchFn), credentials: null }))).toBe('LOGIN_FAILED')
+    expect(await codeOf(searchGoeggel(query(), { ...deps(fetchFn), credentials: null }))).toBe(
+      'LOGIN_FAILED',
+    )
   })
 })

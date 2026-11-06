@@ -27,7 +27,9 @@ const offer = (over: Partial<TireOffer> = {}): TireOffer => ({
 
 describe('matchKey', () => {
   it('is equal for the same tyre written differently', () => {
-    expect(matchKey(offer({ profile: 'Primacy 4+' }))).toBe(matchKey(offer({ profile: 'PRIMACY 4+' })))
+    expect(matchKey(offer({ profile: 'Primacy 4+' }))).toBe(
+      matchKey(offer({ profile: 'PRIMACY 4+' })),
+    )
   })
 })
 

@@ -64,17 +64,28 @@ describe('App', () => {
     await user.selectOptions(screen.getByLabelText('Breite'), '225')
     await user.selectOptions(screen.getByLabelText('Höhe'), '45')
     await user.selectOptions(screen.getByLabelText('Zoll'), '17')
-    await user.click(within(screen.getByRole('group', { name: 'Stückzahl' })).getByRole('button', { name: /^2/ }))
+    await user.click(
+      within(screen.getByRole('group', { name: 'Stückzahl' })).getByRole('button', { name: /^2/ }),
+    )
     await user.click(screen.getByRole('button', { name: /Winter/ }))
     await user.click(screen.getByRole('button', { name: /MICHELIN/ }))
     await user.click(screen.getByRole('button', { name: 'Suchen' }))
-    const expected = { width: 225, height: 45, rim: 17, quantity: 2, seasons: ['winter'], brands: ['MICHELIN'] }
+    const expected = {
+      width: 225,
+      height: 45,
+      rim: 17,
+      quantity: 2,
+      seasons: ['winter'],
+      brands: ['MICHELIN'],
+    }
     expect(search).toHaveBeenCalledWith('weichberger', expected, 'abc')
     expect(search).toHaveBeenCalledWith('goeggel', expected, 'abc')
   })
 
   it('AC4: shows the offers of one shop while the other is still loading', async () => {
-    await renderAndSearch(searchWith({ goeggel: async () => ok('goeggel', [offer()]), weichberger: never }))
+    await renderAndSearch(
+      searchWith({ goeggel: async () => ok('goeggel', [offer()]), weichberger: never }),
+    )
     expect(await screen.findByRole('article')).toHaveTextContent('KUMHO')
     expect(screen.getByTestId('status-weichberger')).toHaveTextContent('lädt')
   })
@@ -90,7 +101,9 @@ describe('App', () => {
         }),
       }),
     )
-    expect(await screen.findByText('Weichberger: Anmeldung fehlgeschlagen – Zugangsdaten prüfen')).toBeInTheDocument()
+    expect(
+      await screen.findByText('Weichberger: Anmeldung fehlgeschlagen – Zugangsdaten prüfen'),
+    ).toBeInTheDocument()
     expect(screen.getByRole('article')).toHaveTextContent('KUMHO')
   })
 
@@ -103,7 +116,8 @@ describe('App', () => {
     await renderAndSearch(
       searchWith({
         goeggel: async () => ok('goeggel', [offer({ ean: '111', priceGrossCents: 10700 })]),
-        weichberger: async () => ok('weichberger', [offer({ shop: 'weichberger', ean: '111', priceGrossCents: 11300 })]),
+        weichberger: async () =>
+          ok('weichberger', [offer({ shop: 'weichberger', ean: '111', priceGrossCents: 11300 })]),
       }),
     )
     await screen.findByText(/113,00/)
@@ -121,7 +135,9 @@ describe('App', () => {
     await renderAndSearch(
       searchWith({
         weichberger: async () =>
-          ok('weichberger', [offer({ shop: 'weichberger', delayed: true, deliveryNote: 'Nebenlager (2–3 Tage)' })]),
+          ok('weichberger', [
+            offer({ shop: 'weichberger', delayed: true, deliveryNote: 'Nebenlager (2–3 Tage)' }),
+          ]),
       }),
     )
     const row = await screen.findByRole('listitem')
@@ -134,7 +150,14 @@ describe('App', () => {
       searchWith({
         goeggel: async () => ok('goeggel', [offer({ ean: '5', priceGrossCents: 12000 })]),
         weichberger: async () =>
-          ok('weichberger', [offer({ shop: 'weichberger', ean: '5', priceGrossCents: 10000, shippingConfigured: false })]),
+          ok('weichberger', [
+            offer({
+              shop: 'weichberger',
+              ean: '5',
+              priceGrossCents: 10000,
+              shippingConfigured: false,
+            }),
+          ]),
       }),
     )
     expect(await screen.findByText('Günstigster (vorläufig)')).toBeInTheDocument()

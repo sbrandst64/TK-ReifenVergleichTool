@@ -22,7 +22,10 @@ export interface HandlerDeps {
   fetchFn?: typeof fetch
 }
 
-const DEFAULT_ADAPTERS: Record<ShopId, ShopAdapter> = { weichberger: searchWeichberger, goeggel: searchGoeggel }
+const DEFAULT_ADAPTERS: Record<ShopId, ShopAdapter> = {
+  weichberger: searchWeichberger,
+  goeggel: searchGoeggel,
+}
 const PER_REQUEST_TIMEOUT_MS = 30000
 const BRAND = /^[A-Z0-9][A-Z0-9 .&'-]{0,39}$/
 const MAX_BRANDS = 8
@@ -44,7 +47,11 @@ function corsHeaders(req: Request, env: Env): Record<string, string> {
 function reply(status: number, body: SearchResponse, cors: Record<string, string>): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...cors, 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
+    headers: {
+      ...cors,
+      'content-type': 'application/json; charset=utf-8',
+      'cache-control': 'no-store',
+    },
   })
 }
 
@@ -71,7 +78,12 @@ function parseRequest(body: unknown): { shop: ShopId; query: SearchQuery } | nul
   const { shop, query } = body as { shop?: unknown; query?: Record<string, unknown> }
   if (!SHOPS.includes(shop as ShopId) || typeof query !== 'object' || query === null) return null
   const { width, height, rim, quantity, seasons = [], brands = [] } = query
-  if (!isInt(width, 100, 400) || !isInt(height, 20, 100) || !isInt(rim, 10, 30) || !isInt(quantity, 1, 20)) {
+  if (
+    !isInt(width, 100, 400) ||
+    !isInt(height, 20, 100) ||
+    !isInt(rim, 10, 30) ||
+    !isInt(quantity, 1, 20)
+  ) {
     return null
   }
   if (!Array.isArray(seasons) || !seasons.every((s) => SEASONS.includes(s as Season))) return null
@@ -101,10 +113,15 @@ function withTimeout<T>(work: Promise<T>, ms: number): Promise<T> {
   return Promise.race([work, timeout]).finally(() => clearTimeout(timer))
 }
 
-export async function handleSearch(req: Request, env: Env, deps: HandlerDeps = {}): Promise<Response> {
+export async function handleSearch(
+  req: Request,
+  env: Env,
+  deps: HandlerDeps = {},
+): Promise<Response> {
   const cors = corsHeaders(req, env)
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors })
-  if (req.method !== 'POST') return reply(405, failure(null, 'BAD_REQUEST', 'Nur POST erlaubt'), cors)
+  if (req.method !== 'POST')
+    return reply(405, failure(null, 'BAD_REQUEST', 'Nur POST erlaubt'), cors)
 
   let config: AppConfig
   try {
@@ -140,7 +157,11 @@ export async function handleSearch(req: Request, env: Env, deps: HandlerDeps = {
     )
     return reply(
       200,
-      { shop, offers: offers.map((o) => toTireOffer(o, query.quantity, config.pricing)), error: null },
+      {
+        shop,
+        offers: offers.map((o) => toTireOffer(o, query.quantity, config.pricing)),
+        error: null,
+      },
       cors,
     )
   } catch (e) {

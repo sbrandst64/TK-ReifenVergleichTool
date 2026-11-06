@@ -82,23 +82,38 @@ for (const src of Object.values(gFiles)) {
   for (const m of (JSON.parse(raw(src)) as GoeggelJson).ergtab.matchAll(EK)) gEk.push(Number(m[2]))
 }
 const gMap = rankMap(gEk, 35, 0.4)
-const zeroSession = (s: string) => s.replace(/sess-shop=[0-9a-f]{32}/g, `sess-shop=${'0'.repeat(32)}`)
+const zeroSession = (s: string) =>
+  s.replace(/sess-shop=[0-9a-f]{32}/g, `sess-shop=${'0'.repeat(32)}`)
 const anonymizeGoeggelHtml = (s: string) =>
   zeroSession(
     s
-      .replace(EK, (_a, open: string, v: string, close: string) => `${open}${(gMap.get(Number(v)) ?? 0).toFixed(2)}${close}`)
-      .replace(/(class='clsdiv_search_(?:ertag|vko|vkm|kbpreis) preiszahl'[^>]*>)[\d.]+(\s*%)?/g, '$10.00$2')
+      .replace(
+        EK,
+        (_a, open: string, v: string, close: string) =>
+          `${open}${(gMap.get(Number(v)) ?? 0).toFixed(2)}${close}`,
+      )
+      .replace(
+        /(class='clsdiv_search_(?:ertag|vko|vkm|kbpreis) preiszahl'[^>]*>)[\d.]+(\s*%)?/g,
+        '$10.00$2',
+      )
       .replace(/data-(min|max|min_start|max_start)='[\d.]+'/g, "data-$1='0'")
       .replace(/\d+(?:[.,]\d+)?\s*&euro;/g, '0 &euro;')
       .replace(/data-(kb|preis|aulapreis)='[\d.]+'/g, "data-$1='0'"),
   )
 for (const [target, src] of Object.entries(gFiles)) {
   const json = JSON.parse(raw(src)) as GoeggelJson
-  const anon = { ...json, filter: anonymizeGoeggelHtml(json.filter), ergtab: anonymizeGoeggelHtml(json.ergtab) }
+  const anon = {
+    ...json,
+    filter: anonymizeGoeggelHtml(json.filter),
+    ergtab: anonymizeGoeggelHtml(json.ergtab),
+  }
   const text = JSON.stringify(anon)
   assertClean(target, text)
   out(target, text)
 }
-const detail = zeroSession(raw('goeggel-detail.json')).replace(/\d+(?:[.,]\d+)?\s*(?:&euro;|€)/g, '0 €')
+const detail = zeroSession(raw('goeggel-detail.json')).replace(
+  /\d+(?:[.,]\d+)?\s*(?:&euro;|€)/g,
+  '0 €',
+)
 assertClean('goeggel/detail.json', detail)
 out('goeggel/detail.json', detail)

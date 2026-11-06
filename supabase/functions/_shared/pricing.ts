@@ -36,7 +36,11 @@ export function shippingPerUnitCents(rule: ShippingRule | null, quantity: number
   return rule.perUnitCents
 }
 
-export function grossPriceCents(netEkCents: number, shippingCents: number, cfg: PricingConfigShape): number {
+export function grossPriceCents(
+  netEkCents: number,
+  shippingCents: number,
+  cfg: PricingConfigShape,
+): number {
   const net = netEkCents + shippingCents + cfg.markupCents
   // Work in 1/100 cent to stay integer: net × (100 + VAT %)
   const scaled = net * (100 + cfg.vatPercent)

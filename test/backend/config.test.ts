@@ -45,6 +45,8 @@ describe('loadConfig', () => {
 
   it('rejects invalid numbers', () => {
     expect(() => loadConfig({ ...minimal, PRICE_MARKUP_EUR: 'abc' })).toThrow(/PRICE_MARKUP_EUR/)
-    expect(() => loadConfig({ ...minimal, MAX_OFFERS_PER_SHOP: '0' })).toThrow(/MAX_OFFERS_PER_SHOP/)
+    expect(() => loadConfig({ ...minimal, MAX_OFFERS_PER_SHOP: '0' })).toThrow(
+      /MAX_OFFERS_PER_SHOP/,
+    )
   })
 })

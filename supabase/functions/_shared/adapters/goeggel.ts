@@ -19,7 +19,11 @@ const AJAX_SEARCH = '/includes/php_ajax/ajax_search.php'
 const AJAX_GLOBAL = '/includes/php_ajax/ajax_global.php'
 const SEARCH_FUNCS = new Set(['holeSuchergebnis', 'filtereSuchergebnis'])
 const GLOBAL_FUNCS = new Set(['ladeBildanzeige'])
-const SEASON_VALUE: Record<Season, string> = { sommer: 'sommer', winter: 'winter', ganzjahr: 'allwetter' }
+const SEASON_VALUE: Record<Season, string> = {
+  sommer: 'sommer',
+  winter: 'winter',
+  ganzjahr: 'allwetter',
+}
 const MAX_PAGES = 40
 const DETAIL_CONCURRENCY = 4
 
@@ -39,7 +43,8 @@ export function isAllowedGoeggelUrl(url: URL, form?: Record<string, string>): bo
 }
 
 const clean = (s: string | null | undefined) => (s ?? '').replace(/\s+/g, ' ').trim()
-const layout = (what: string) => new AdapterError('LAYOUT_CHANGED', `Göggel: ${what} nicht gefunden`)
+const layout = (what: string) =>
+  new AdapterError('LAYOUT_CHANGED', `Göggel: ${what} nicht gefunden`)
 
 export function parseGoeggelResults(ergtabHtml: string): ShopOffer[] {
   if (!ergtabHtml.trim()) return []
@@ -76,7 +81,9 @@ export function parseGoeggelResults(ergtabHtml: string): ShopOffer[] {
       stockImmediate: stock,
       stockTotal: stock,
       deliveryNote: text('clsdiv_bestandsanzeige_lieferzeit'),
-      season: seasonFromGoeggelIcon(row.querySelector('.clsdiv_searcherg_saison img')?.getAttribute('src') ?? ''),
+      season: seasonFromGoeggelIcon(
+        row.querySelector('.clsdiv_searcherg_saison img')?.getAttribute('src') ?? '',
+      ),
       netEkCents: Math.round(ek * 100),
     })
   }
@@ -88,7 +95,8 @@ export function parseGoeggelPaging(html: string): PagingInfo | null {
   return m ? { from: Number(m[1]), to: Number(m[2]), total: Number(m[3]) } : null
 }
 
-const nurVerfuegbarButton = (filterHtml: string) => filterHtml.match(/<button\b[^>]*idbtn_filter_nur_vfg[^>]*>/i)?.[0]
+const nurVerfuegbarButton = (filterHtml: string) =>
+  filterHtml.match(/<button\b[^>]*idbtn_filter_nur_vfg[^>]*>/i)?.[0]
 
 export function isNurVerfuegbarActive(filterHtml: string): boolean {
   const tag = nurVerfuegbarButton(filterHtml)
@@ -111,9 +119,14 @@ interface ResultJson {
   ergtab: string
 }
 
-async function ajax(session: ShopSession, path: string, form: Record<string, string>): Promise<ResultJson> {
+async function ajax(
+  session: ShopSession,
+  path: string,
+  form: Record<string, string>,
+): Promise<ResultJson> {
   const res = await session.post(path, form, { xhr: true })
-  if (/idinploginpwd/.test(res.text)) throw new AdapterError('SESSION_EXPIRED', 'Göggel: Sitzung abgelaufen')
+  if (/idinploginpwd/.test(res.text))
+    throw new AdapterError('SESSION_EXPIRED', 'Göggel: Sitzung abgelaufen')
   try {
     const json = JSON.parse(res.text) as Partial<ResultJson>
     if (typeof json.ergtab !== 'string') throw new Error('ergtab')
@@ -151,7 +164,11 @@ async function searchCombo(
     hersteller: combo.brand ?? '',
   })
   if (nurVerfuegbarButton(data.filter) && !isNurVerfuegbarActive(data.filter)) {
-    data = await ajax(session, filterUrl, { func: 'filtereSuchergebnis', filterart: 'nurvfg', filterwert: 'vfg' })
+    data = await ajax(session, filterUrl, {
+      func: 'filtereSuchergebnis',
+      filterart: 'nurvfg',
+      filterwert: 'vfg',
+    })
     if (!isNurVerfuegbarActive(data.filter)) throw layout('Filter „nur verfügbare Artikel“')
   }
 
@@ -166,8 +183,19 @@ async function searchCombo(
       if (o.stockImmediate >= query.quantity) stocked.set(o.shopArticleId, o)
     }
     const paging = parseGoeggelPaging(data.filter + data.ergtab)
-    if (stocked.size >= maxOffers || !paging || paging.to >= paging.total || added === 0 || page >= MAX_PAGES) break
-    data = await ajax(session, filterUrl, { func: 'filtereSuchergebnis', filterart: 'blaettern', filterwert: 'hoch' })
+    if (
+      stocked.size >= maxOffers ||
+      !paging ||
+      paging.to >= paging.total ||
+      added === 0 ||
+      page >= MAX_PAGES
+    )
+      break
+    data = await ajax(session, filterUrl, {
+      func: 'filtereSuchergebnis',
+      filterart: 'blaettern',
+      filterwert: 'hoch',
+    })
   }
   return [...stocked.values()]
 }
@@ -204,7 +232,11 @@ export async function searchGoeggel(query: SearchQuery, deps: AdapterDeps): Prom
 }
 
 /** Search part only, for an already logged-in session. */
-export async function runGoeggelSearch(session: ShopSession, query: SearchQuery, maxOffers: number): Promise<ShopOffer[]> {
+export async function runGoeggelSearch(
+  session: ShopSession,
+  query: SearchQuery,
+  maxOffers: number,
+): Promise<ShopOffer[]> {
   const all = new Map<string, ShopOffer>()
   for (const combo of searchCombos(query)) {
     for (const o of await searchCombo(session, query, combo, maxOffers)) {

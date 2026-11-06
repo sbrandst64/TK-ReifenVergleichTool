@@ -10,17 +10,41 @@ describe('TagGroup', () => {
   it('AC5a: multi mode toggles a tag on and off', async () => {
     const onChange = vi.fn()
     const user = userEvent.setup()
-    const { rerender } = render(<TagGroup label="Marke" options={options} selected={['A']} onChange={onChange} mode="multi" />)
+    const { rerender } = render(
+      <TagGroup
+        label="Marke"
+        options={options}
+        selected={['A']}
+        onChange={onChange}
+        mode="multi"
+      />,
+    )
     await user.click(screen.getByRole('button', { name: /Tag B/ }))
     expect(onChange).toHaveBeenLastCalledWith(['A', 'B'])
     await user.click(screen.getByRole('button', { name: /Tag A/ }))
     expect(onChange).toHaveBeenLastCalledWith([])
-    rerender(<TagGroup label="Marke" options={options} selected={['B']} onChange={onChange} mode="multi" />)
+    rerender(
+      <TagGroup
+        label="Marke"
+        options={options}
+        selected={['B']}
+        onChange={onChange}
+        mode="multi"
+      />,
+    )
     expect(screen.getByRole('button', { name: /Tag B/ })).toHaveAttribute('aria-pressed', 'true')
   })
 
   it('AC5a: the active state is visible without colour (check mark)', () => {
-    render(<TagGroup label="Marke" options={options} selected={['C']} onChange={() => {}} mode="multi" />)
+    render(
+      <TagGroup
+        label="Marke"
+        options={options}
+        selected={['C']}
+        onChange={() => {}}
+        mode="multi"
+      />,
+    )
     expect(screen.getByRole('button', { name: /Tag C/ })).toHaveTextContent('✓')
     expect(screen.getByRole('button', { name: /Tag A/ })).not.toHaveTextContent('✓')
   })
@@ -28,7 +52,15 @@ describe('TagGroup', () => {
   it('AC5a: single mode replaces the selection and never deselects', async () => {
     const onChange = vi.fn()
     const user = userEvent.setup()
-    render(<TagGroup label="Stückzahl" options={options} selected={['A']} onChange={onChange} mode="single" />)
+    render(
+      <TagGroup
+        label="Stückzahl"
+        options={options}
+        selected={['A']}
+        onChange={onChange}
+        mode="single"
+      />,
+    )
     await user.click(screen.getByRole('button', { name: /Tag C/ }))
     expect(onChange).toHaveBeenLastCalledWith(['C'])
     await user.click(screen.getByRole('button', { name: /Tag A/ }))
@@ -36,7 +68,9 @@ describe('TagGroup', () => {
   })
 
   it('is a labelled group', () => {
-    render(<TagGroup label="Saison" options={options} selected={[]} onChange={() => {}} mode="multi" />)
+    render(
+      <TagGroup label="Saison" options={options} selected={[]} onChange={() => {}} mode="multi" />,
+    )
     expect(screen.getByRole('group', { name: 'Saison' })).toBeInTheDocument()
   })
 

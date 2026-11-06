@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
 import { handleSearch, type ShopAdapter } from '../../supabase/functions/_shared/search-handler.ts'
-import { AdapterError, type SearchResponse, type ShopOffer } from '../../supabase/functions/_shared/types.ts'
+import {
+  AdapterError,
+  type SearchResponse,
+  type ShopOffer,
+} from '../../supabase/functions/_shared/types.ts'
 
 const ORIGIN = 'http://localhost:5173'
 const env = {
@@ -38,7 +42,12 @@ const shopOffer: ShopOffer = {
 function request(body: unknown, headers: Record<string, string> = {}, method = 'POST'): Request {
   return new Request('http://localhost/functions/v1/search', {
     method,
-    headers: { 'content-type': 'application/json', origin: ORIGIN, 'x-werkstatt-code': 'werkstatt-123', ...headers },
+    headers: {
+      'content-type': 'application/json',
+      origin: ORIGIN,
+      'x-werkstatt-code': 'werkstatt-123',
+      ...headers,
+    },
     body: method === 'POST' ? JSON.stringify(body) : undefined,
   })
 }
@@ -79,7 +88,10 @@ describe('handleSearch', () => {
     ['width out of range', { ...validBody, query: { ...validBody.query, width: 9 } }],
     ['quantity 0', { ...validBody, query: { ...validBody.query, quantity: 0 } }],
     ['unknown season', { ...validBody, query: { ...validBody.query, seasons: ['herbst'] } }],
-    ['brand with odd characters', { ...validBody, query: { ...validBody.query, brands: ['<script>'] } }],
+    [
+      'brand with odd characters',
+      { ...validBody, query: { ...validBody.query, brands: ['<script>'] } },
+    ],
   ])('rejects %s with 400', async (_name, body) => {
     const res = await handleSearch(request(body), env, { adapters: { goeggel: ok } })
     expect(res.status).toBe(400)
@@ -115,7 +127,8 @@ describe('handleSearch', () => {
     const text = await res.text()
     expect(text).not.toContain('netEkCents')
     expect(text).not.toContain('5014')
-    for (const secret of ['goeggel-secret-pw', 'goeggel-user', 'werkstatt-123']) expect(text).not.toContain(secret)
+    for (const secret of ['goeggel-secret-pw', 'goeggel-user', 'werkstatt-123'])
+      expect(text).not.toContain(secret)
   })
 
   it('AC22: adapter errors are returned with their code', async () => {
@@ -145,7 +158,11 @@ describe('handleSearch', () => {
   })
 
   it('a configuration error → 500 CONFIG_ERROR', async () => {
-    const res = await handleSearch(request(validBody), { ...env, PRICE_MARKUP_EUR: 'x' }, { adapters: { goeggel: ok } })
+    const res = await handleSearch(
+      request(validBody),
+      { ...env, PRICE_MARKUP_EUR: 'x' },
+      { adapters: { goeggel: ok } },
+    )
     expect(res.status).toBe(500)
     expect(((await res.json()) as SearchResponse).error?.code).toBe('CONFIG_ERROR')
   })

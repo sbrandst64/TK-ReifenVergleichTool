@@ -81,7 +81,10 @@ describe('parseShippingRule', () => {
   })
 
   it('accepts a comma as decimal separator and spaces', () => {
-    expect(parseShippingRule(' freeFrom=2 ; perUnit=6,50 ')).toEqual({ freeFrom: 2, perUnitCents: 650 })
+    expect(parseShippingRule(' freeFrom=2 ; perUnit=6,50 ')).toEqual({
+      freeFrom: 2,
+      perUnitCents: 650,
+    })
   })
 
   it('returns null for empty or missing values', () => {
@@ -120,7 +123,11 @@ describe('toTireOffer', () => {
   })
 
   it('not delayed when immediate stock suffices', () => {
-    const t = toTireOffer(offer({ shop: 'weichberger', stockImmediate: 4, stockTotal: 9, deliveryNote: '' }), 4, cfg)
+    const t = toTireOffer(
+      offer({ shop: 'weichberger', stockImmediate: 4, stockTotal: 9, deliveryNote: '' }),
+      4,
+      cfg,
+    )
     expect(t.delayed).toBe(false)
     expect(t.deliveryNote).toBe('sofort')
   })

@@ -14,7 +14,9 @@ export interface LoadSpeed {
 const LOAD_SPEED_TOKEN = /^(\d{2,3}(?:\/\d{2,3})?)([A-Z]{1,2})$/
 
 /** Weichberger: "<Kürzel> 205/55R16 <Profil …> 91H [Zusätze]". */
-export function parseWeichbergerDescription(desc: string): (TireSize & LoadSpeed & { profile: string }) | null {
+export function parseWeichbergerDescription(
+  desc: string,
+): (TireSize & LoadSpeed & { profile: string }) | null {
   const m = desc.trim().match(/^\S+\s+(\d{3})\/(\d{2})\s*Z?R\s*(\d{2})\s+(.+)$/i)
   if (!m) return null
   const tokens = m[4].split(/\s+/)

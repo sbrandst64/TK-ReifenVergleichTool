@@ -14,7 +14,10 @@ export interface OfferGroup {
   provisional: boolean
   shops: ShopId[]
 }
-type KeyFields = Pick<TireOffer, 'brand' | 'profile' | 'width' | 'height' | 'rim' | 'loadIndex' | 'speedIndex'>
+type KeyFields = Pick<
+  TireOffer,
+  'brand' | 'profile' | 'width' | 'height' | 'rim' | 'loadIndex' | 'speedIndex'
+>
 
 export function matchKey(o: KeyFields): string {
   return [

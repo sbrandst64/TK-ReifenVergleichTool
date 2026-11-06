@@ -21,7 +21,9 @@ export interface FakeRoute {
 export function fakeFetch(routes: FakeRoute[]) {
   const calls: RecordedCall[] = []
   const fetchFn = (async (input: RequestInfo | URL, init?: RequestInit) => {
-    const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url)
+    const url = new URL(
+      typeof input === 'string' ? input : input instanceof URL ? input.href : input.url,
+    )
     const method = (init?.method ?? 'GET').toUpperCase()
     const form = new URLSearchParams(typeof init?.body === 'string' ? init.body : '')
     const headers = new Headers(init?.headers)
@@ -55,7 +57,10 @@ export function redirectResponse(location: string, cookies: string[] = []): Resp
   return new Response(null, { status: 302, headers })
 }
 
-export function jsonResponse(body: unknown | string, contentType = 'application/json; charset=utf-8'): Response {
+export function jsonResponse(
+  body: unknown | string,
+  contentType = 'application/json; charset=utf-8',
+): Response {
   return new Response(typeof body === 'string' ? body : JSON.stringify(body), {
     headers: { 'content-type': contentType },
   })
