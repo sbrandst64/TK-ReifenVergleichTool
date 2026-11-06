@@ -18,6 +18,12 @@
   --delayed-text: #713f12;
   --error-bg: #fef2f2;
   --error-text: #b91c1c;
+  /* filter area: cool light grey-blue, clearly apart from the white tyre list */
+  --panel-bg: #eaeff5;
+  --panel-line: #d3dbe5;
+  /* shop badges, taken from the shop logos */
+  --shop-weichberger: #005090;
+  --shop-goeggel: #000000;
   --radius: 8px;
   --tap: 44px;
   --z-sticky: 10;
@@ -193,6 +199,14 @@ input:focus-visible {
   font-weight: 600;
 }
 
+/* ---------- filter panel ---------- */
+.panel {
+  padding: 4px 14px;
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius);
+  background: var(--panel-bg);
+}
+
 /* ---------- summary bar (phones/tablets after a search) ---------- */
 /* The folded panel sticks to the top (sticky needs the tall page as its container,
    so the panel sticks, not the summary inside it). */
@@ -200,7 +214,8 @@ input:focus-visible {
   position: sticky;
   top: 0;
   z-index: var(--z-sticky);
-  background: var(--bg);
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
 }
 
 .summary {
@@ -209,8 +224,6 @@ input:focus-visible {
   justify-content: space-between;
   gap: 12px;
   padding: 8px 0;
-  border-bottom: 1px solid var(--line);
-  background: var(--bg);
 }
 
 .summary__text {
@@ -297,8 +310,29 @@ input:focus-visible {
   gap: 2px 10px;
 }
 
-.offer__shop {
-  font-weight: 600;
+.shop-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 8px;
+  border: 1px solid;
+  border-radius: 6px;
+}
+
+.shop-badge__logo {
+  display: block;
+  height: 26px;
+  width: auto;
+}
+
+.shop-badge--weichberger {
+  border-color: var(--shop-weichberger);
+  background: #ffffff;
+}
+
+.shop-badge--goeggel {
+  border-color: var(--shop-goeggel);
+  background: var(--shop-goeggel);
 }
 
 .offer__info {
@@ -355,11 +389,14 @@ input:focus-visible {
     gap: 40px;
   }
 
-  .panel {
+  .panel,
+  .panel[data-collapsed='true'] {
     position: sticky;
-    top: 0;
-    max-height: 100vh;
+    top: 16px;
+    max-height: calc(100vh - 32px);
     overflow-y: auto;
+    padding: 4px 18px;
+    border-radius: var(--radius);
   }
 
   .panel[data-collapsed='true'] .search {

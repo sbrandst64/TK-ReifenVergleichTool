@@ -33,6 +33,8 @@ Stand 2026-11-06, Branch `feat/erster-build`.
 | 10 | Fehlendes Pflichtfeld im Shop-HTML → LAYOUT_CHANGED statt falscher Preise (AC23) | `weichberger.test.ts`, `goeggel.test.ts` | unit |
 | 11 | Handler: Werkstatt-Code (401), Validierung (400), CORS, Timeout, Fehlercodes; Antwort ohne EK und ohne Zugangsdaten (AC24–AC26) | `search-handler.test.ts` | integration |
 | 12 | UI: Tags → Suchanfrage, Shop einzeln sichtbar, Fehlermeldungen, leerer Zustand, „Günstigster (vorläufig)“, gelb, Code-Abfrage bei 401, alte Antworten verworfen (AC3–AC5a, AC7, AC11, AC13, AC16, AC22, AC25) | `src/App.test.tsx`, `src/components/TagGroup.test.tsx`, `src/api.test.ts` | component |
+| 13 | Tag-Auswahl ändert die Beschriftung nicht (kein Häkchen); Anbieter-Filter fragt nur den gewählten Shop ab; jede Zeile zeigt das Shop-Logo auf dem Shopschild (AC5a, AC27, AC28). RED: cc32639, 0c4d47f | `src/components/TagGroup.test.tsx`, `src/App.test.tsx` | component |
+| 14 | Filterbereich farblich abgesetzt, Logos lesbar, Tags springen nicht (AC29, manuell) | Browser bei 375, 768, 1024, 1280 px | manuell |
 
 ## Zusätzlich manuell verifiziert (nicht automatisiert)
 

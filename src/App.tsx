@@ -62,18 +62,23 @@ function statusText(shop: ShopId, state: ShopState): string {
   }
 }
 
-function summaryText(q: SearchQuery): string {
+function summaryText(q: SearchQuery, shops: ShopId[]): string {
   const seasons = q.seasons.map((s) => SEASON_OPTIONS.find((o) => o.value === s)?.label ?? s)
-  return [`${q.width}/${q.height} R${q.rim}`, `${q.quantity} Stk`, ...seasons, ...q.brands].join(
-    ' · ',
-  )
+  const only = shops.length < SHOPS.length ? shops.map((s) => SHOP_LABEL[s]) : []
+  return [
+    `${q.width}/${q.height} R${q.rim}`,
+    `${q.quantity} Stk`,
+    ...seasons,
+    ...q.brands,
+    ...only,
+  ].join(' · ')
 }
 
 export function App({ search = defaultSearch }: AppProps) {
   const [code, setCode] = useState(readCode)
   const [codeError, setCodeError] = useState<string | null>(null)
   const [shops, setShops] = useState<Record<ShopId, ShopState>>(IDLE)
-  const [lastQuery, setLastQuery] = useState<SearchQuery | null>(null)
+  const [lastSearch, setLastSearch] = useState<{ query: SearchQuery; shops: ShopId[] } | null>(null)
   const [collapsed, setCollapsed] = useState(false)
   const latest = useRef(0)
 
@@ -94,14 +99,18 @@ export function App({ search = defaultSearch }: AppProps) {
     setCodeError(null)
   }
 
-  const runSearch = (query: SearchQuery) => {
+  const runSearch = (query: SearchQuery, selected: ShopId[]) => {
     const id = ++latest.current
-    setLastQuery(query)
+    setLastSearch({ query, shops: selected })
     setCollapsed(true)
     // Bring summary + results into view (phones: the form above has just folded away).
     document.documentElement.scrollTop = 0
-    setShops({ weichberger: { status: 'loading' }, goeggel: { status: 'loading' } })
-    for (const shop of SHOPS) {
+    // Shops left out by the provider filter stay idle: no status line, no offers (AC27).
+    setShops({
+      ...IDLE,
+      ...Object.fromEntries(selected.map((s) => [s, { status: 'loading' } as const])),
+    })
+    for (const shop of selected) {
       search(shop, query, code)
         .then((res) => {
           if (id !== latest.current) return // answer of an older search
@@ -141,9 +150,11 @@ export function App({ search = defaultSearch }: AppProps) {
       ) : (
         <div className="layout">
           <aside className="panel" data-testid="search-panel" data-collapsed={String(collapsed)}>
-            {collapsed && lastQuery && (
+            {collapsed && lastSearch && (
               <div className="summary" data-testid="search-summary">
-                <span className="summary__text">{summaryText(lastQuery)}</span>
+                <span className="summary__text">
+                  {summaryText(lastSearch.query, lastSearch.shops)}
+                </span>
                 <button type="button" className="button" onClick={() => setCollapsed(false)}>
                   Ändern
                 </button>

@@ -1,10 +1,16 @@
 // Size as dropdowns, quantity/season/brand as tags (spec 3.1).
 import { useState } from 'react'
-import type { SearchQuery, Season } from '../../supabase/functions/_shared/types.ts'
+import {
+  SHOPS,
+  type SearchQuery,
+  type Season,
+  type ShopId,
+} from '../../supabase/functions/_shared/types.ts'
 import {
   BRANDS,
   DEFAULTS,
   HEIGHTS,
+  PROVIDER_OPTIONS,
   QUANTITIES,
   RIMS,
   SEASON_OPTIONS,
@@ -38,7 +44,12 @@ function SizeSelect(props: {
   )
 }
 
-export function SearchForm({ onSearch }: { onSearch: (query: SearchQuery) => void }) {
+export function SearchForm({
+  onSearch,
+}: {
+  onSearch: (query: SearchQuery, shops: ShopId[]) => void
+}) {
+  const [provider, setProvider] = useState('beide')
   const [width, setWidth] = useState(DEFAULTS.width)
   const [height, setHeight] = useState(DEFAULTS.height)
   const [rim, setRim] = useState(DEFAULTS.rim)
@@ -51,9 +62,18 @@ export function SearchForm({ onSearch }: { onSearch: (query: SearchQuery) => voi
       className="search"
       onSubmit={(e) => {
         e.preventDefault()
-        onSearch({ width, height, rim, quantity, seasons, brands })
+        const shops = provider === 'beide' ? [...SHOPS] : SHOPS.filter((s) => s === provider)
+        onSearch({ width, height, rim, quantity, seasons, brands }, shops)
       }}
     >
+      <TagGroup
+        label="Anbieter"
+        mode="single"
+        className="tag-group--even"
+        options={PROVIDER_OPTIONS}
+        selected={[provider]}
+        onChange={([v]) => setProvider(v)}
+      />
       <div className="size" aria-label="Reifengröße" role="group">
         <SizeSelect id="width" label="Breite" values={WIDTHS} value={width} onChange={setWidth} />
         <span className="size__sep" aria-hidden="true">

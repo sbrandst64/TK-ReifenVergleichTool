@@ -1,5 +1,5 @@
 // Fixed option lists for the search form (spec 3.1, [Annahme] values).
-import type { Season } from '../supabase/functions/_shared/types.ts'
+import type { Season, ShopId } from '../supabase/functions/_shared/types.ts'
 
 const range = (from: number, to: number, step: number) =>
   Array.from({ length: Math.floor((to - from) / step) + 1 }, (_, i) => from + i * step)
@@ -14,6 +14,13 @@ export const SEASON_OPTIONS: { value: Season; label: string }[] = [
   { value: 'sommer', label: 'Sommer' },
   { value: 'winter', label: 'Winter' },
   { value: 'ganzjahr', label: 'Ganzjahr' },
+]
+
+/** Provider filter: exactly one active; "beide" searches every shop (spec 3.1, AC27). */
+export const PROVIDER_OPTIONS: { value: 'beide' | ShopId; label: string }[] = [
+  { value: 'beide', label: 'Beide' },
+  { value: 'weichberger', label: 'Weichberger' },
+  { value: 'goeggel', label: 'Göggel' },
 ]
 
 /** Start list from the Weichberger manufacturer filter (phase0-recon.md); most common first. */
