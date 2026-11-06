@@ -1,0 +1,14 @@
+# Recon-Mitschnitte: HAR-Dateien und Storage-States enthalten Passwörter,
+# Session-Cookies und Kundendaten. Niemals committen.
+recon/
+
+# Zugangsdaten
+.env
+.env.*
+!.env.example
+
+node_modules/
+dist/
+coverage/
+supabase/.temp/
+.vitest/
