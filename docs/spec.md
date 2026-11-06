@@ -46,7 +46,8 @@ aufgeführt und gelten, solange niemand widerspricht.
   - **Marke** als Tags, mehrere wählbar. Kein Tag aktiv = alle Marken. Feste Liste im Frontend
     (Startliste E12) mit Zuordnung je Shop-Schreibweise. Die häufigsten Marken sind sichtbar, der Rest
     hinter „Alle Marken anzeigen“. **[Annahme]** (welche zuerst sichtbar sind)
-  - Tags sind große Tippflächen. Der aktive Zustand ist auch ohne Farbe erkennbar (z. B. Häkchen).
+  - Tags sind große Tippflächen. Aktiv = blau gefüllt, inaktiv = weiß mit Rahmen (Helligkeitsunterschied,
+    nicht nur Farbton). Kein Häkchen, damit sich die Tags beim Antippen nicht verschieben (Wunsch 2026-11-06).
 - **Mehrfachauswahl im Adapter:** Kann ein Shop mehrere Werte in einer Abfrage filtern, nutzt der
   Adapter das. Sonst stellt er eine Abfrage je gewähltem Wert und führt die Treffer zusammen.
   Weichberger braucht dafür je Abfrage eine eigene Session, weil die Suche in der Session liegt (E3).

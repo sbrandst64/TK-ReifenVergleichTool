@@ -90,8 +90,8 @@ describe('TagGroup', () => {
         moreLabel="Alle Marken anzeigen"
       />,
     )
-    expect(screen.getAllByRole('button', { name: /^(✓ )?Tag/ })).toHaveLength(3) // A, B + selected D
+    expect(screen.getAllByRole('button', { name: /^Tag/ })).toHaveLength(3) // A, B + selected D
     await user.click(screen.getByRole('button', { name: 'Alle Marken anzeigen' }))
-    expect(screen.getAllByRole('button', { name: /^(✓ )?Tag/ })).toHaveLength(4)
+    expect(screen.getAllByRole('button', { name: /^Tag/ })).toHaveLength(4)
   })
 })

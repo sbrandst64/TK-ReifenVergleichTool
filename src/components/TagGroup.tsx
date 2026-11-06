@@ -1,5 +1,6 @@
 // Selectable tags ("pills"). Multi mode toggles; single mode always keeps exactly one active.
-// The active state is shown with a check mark, not only by colour (AC5a).
+// Active = filled blue vs. white outline (differs in brightness, not only hue) and aria-pressed.
+// No check mark: it changed the tag width and made the wrapped rows jump on phones (AC5a).
 import { useId, useState } from 'react'
 
 export interface TagOption {
@@ -64,7 +65,6 @@ export function TagGroup({
               aria-pressed={active}
               onClick={() => toggle(o.value)}
             >
-              {active && <span aria-hidden="true">✓ </span>}
               {o.label}
             </button>
           )
