@@ -68,13 +68,15 @@ export function SearchForm({ onSearch }: { onSearch: (query: SearchQuery) => voi
       <TagGroup
         label="Stückzahl"
         mode="single"
-        options={QUANTITIES.map((q) => ({ value: String(q), label: `${q} Stk` }))}
+        className="tag-group--even"
+        options={QUANTITIES.map((q) => ({ value: String(q), label: String(q) }))}
         selected={[String(quantity)]}
         onChange={([v]) => setQuantity(Number(v))}
       />
       <TagGroup
         label="Saison"
         mode="multi"
+        className="tag-group--even"
         options={SEASON_OPTIONS}
         selected={seasons}
         onChange={(v) => setSeasons(v as Season[])}

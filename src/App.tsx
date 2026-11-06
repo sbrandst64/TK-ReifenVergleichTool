@@ -1,4 +1,6 @@
 // Searches both shops in parallel; each shop's result appears as soon as it arrives (AC4).
+// Phone/tablet: after a search the form folds into a one-line summary so results are on screen.
+// Wide screens: the form stays visible in a side column (CSS decides, see styles.css).
 import { useMemo, useRef, useState } from 'react'
 import { groupOffers } from '../supabase/functions/_shared/matching.ts'
 import {
@@ -12,6 +14,7 @@ import { CodePrompt } from './components/CodePrompt.tsx'
 import { ResultList } from './components/ResultList.tsx'
 import { SearchForm } from './components/SearchForm.tsx'
 import { errorMessage, SHOP_LABEL } from './messages.ts'
+import { SEASON_OPTIONS } from './options.ts'
 
 export interface AppProps {
   search?: SearchFn
@@ -51,25 +54,36 @@ function statusText(shop: ShopId, state: ShopState): string {
       return `${SHOP_LABEL[shop]}: lädt …`
     case 'error':
       return state.message
-    case 'done':
-      return state.offers.length === 0
-        ? `${SHOP_LABEL[shop]}: Keine lagernden Reifen in dieser Größe`
-        : `${SHOP_LABEL[shop]}: ${state.offers.length} Angebote`
+    case 'done': {
+      const n = state.offers.length
+      if (n === 0) return `${SHOP_LABEL[shop]}: Keine lagernden Reifen in dieser Größe`
+      return `${SHOP_LABEL[shop]}: ${n} ${n === 1 ? 'Angebot' : 'Angebote'}`
+    }
   }
+}
+
+function summaryText(q: SearchQuery): string {
+  const seasons = q.seasons.map((s) => SEASON_OPTIONS.find((o) => o.value === s)?.label ?? s)
+  return [`${q.width}/${q.height} R${q.rim}`, `${q.quantity} Stk`, ...seasons, ...q.brands].join(
+    ' · ',
+  )
 }
 
 export function App({ search = defaultSearch }: AppProps) {
   const [code, setCode] = useState(readCode)
   const [codeError, setCodeError] = useState<string | null>(null)
   const [shops, setShops] = useState<Record<ShopId, ShopState>>(IDLE)
+  const [lastQuery, setLastQuery] = useState<SearchQuery | null>(null)
+  const [collapsed, setCollapsed] = useState(false)
   const latest = useRef(0)
 
   const groups = useMemo(
     () =>
       groupOffers(
-        SHOPS.flatMap((s) =>
-          shops[s].status === 'done' ? (shops[s] as { offers: TireOffer[] }).offers : [],
-        ),
+        SHOPS.flatMap((s) => {
+          const state = shops[s]
+          return state.status === 'done' ? state.offers : []
+        }),
       ),
     [shops],
   )
@@ -82,6 +96,10 @@ export function App({ search = defaultSearch }: AppProps) {
 
   const runSearch = (query: SearchQuery) => {
     const id = ++latest.current
+    setLastQuery(query)
+    setCollapsed(true)
+    // Bring summary + results into view (phones: the form above has just folded away).
+    document.documentElement.scrollTop = 0
     setShops({ weichberger: { status: 'loading' }, goeggel: { status: 'loading' } })
     for (const shop of SHOPS) {
       search(shop, query, code)
@@ -102,6 +120,7 @@ export function App({ search = defaultSearch }: AppProps) {
             setCode('')
             setCodeError('Werkstatt-Code ungültig')
             setShops(IDLE)
+            setCollapsed(false)
             return
           }
           setShops((prev) => ({
@@ -114,31 +133,43 @@ export function App({ search = defaultSearch }: AppProps) {
 
   return (
     <main className="app">
-      <header className="app__head">
+      <header className="topbar">
         <h1>Reifen-Preisvergleich</h1>
       </header>
       {!code ? (
         <CodePrompt error={codeError} onSave={saveCode} />
       ) : (
-        <>
-          <SearchForm onSearch={runSearch} />
-          <div className="status" aria-live="polite">
-            {SHOPS.map((shop) => {
-              const state = shops[shop]
-              const text = statusText(shop, state)
-              return text ? (
-                <p
-                  key={shop}
-                  data-testid={`status-${shop}`}
-                  className={`status__line status__line--${state.status}`}
-                >
-                  {text}
-                </p>
-              ) : null
-            })}
-          </div>
-          <ResultList groups={groups} />
-        </>
+        <div className="layout">
+          <aside className="panel" data-testid="search-panel" data-collapsed={String(collapsed)}>
+            {collapsed && lastQuery && (
+              <div className="summary" data-testid="search-summary">
+                <span className="summary__text">{summaryText(lastQuery)}</span>
+                <button type="button" className="button" onClick={() => setCollapsed(false)}>
+                  Ändern
+                </button>
+              </div>
+            )}
+            <SearchForm onSearch={runSearch} />
+          </aside>
+          <section className="results-col" aria-label="Suchergebnisse">
+            <div className="status" aria-live="polite">
+              {SHOPS.map((shop) => {
+                const state = shops[shop]
+                const text = statusText(shop, state)
+                return text ? (
+                  <p
+                    key={shop}
+                    data-testid={`status-${shop}`}
+                    className={`status__line status__line--${state.status}`}
+                  >
+                    {text}
+                  </p>
+                ) : null
+              })}
+            </div>
+            <ResultList groups={groups} />
+          </section>
+        </div>
       )}
     </main>
   )

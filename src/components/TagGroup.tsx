@@ -15,6 +15,8 @@ export interface TagGroupProps {
   /** Show only this many options (plus selected ones) until expanded. */
   collapsedCount?: number
   moreLabel?: string
+  /** Extra class, e.g. "tag-group--even" for equally wide tags in one row. */
+  className?: string
 }
 
 export function TagGroup({
@@ -25,6 +27,7 @@ export function TagGroup({
   mode,
   collapsedCount,
   moreLabel = 'Alle anzeigen',
+  className,
 }: TagGroupProps) {
   const labelId = useId()
   const [expanded, setExpanded] = useState(false)
@@ -42,7 +45,11 @@ export function TagGroup({
   }
 
   return (
-    <div className="tag-group" role="group" aria-labelledby={labelId}>
+    <div
+      className={className ? `tag-group ${className}` : 'tag-group'}
+      role="group"
+      aria-labelledby={labelId}
+    >
       <span className="tag-group__label" id={labelId}>
         {label}
       </span>

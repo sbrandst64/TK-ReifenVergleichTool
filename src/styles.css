@@ -1,49 +1,35 @@
-/* Workshop UI: big touch targets, high contrast, works with mouse and phone. */
+/* Plain workshop UI: white background, black text, colour only for state
+   (blue = selected/primary action, green = cheapest, yellow = slower stock, red = error).
+   Mobile first; wider screens add a side column for the filters. */
 :root {
-  --bg: #f4f5f7;
-  --surface: #ffffff;
-  --text: #16181d;
-  --muted: #5b616e;
-  --border: #d5d8de;
-  --accent: #1d4ed8;
+  --bg: #ffffff;
+  --text: #111827;
+  --muted: #4b5563; /* 7.6:1 on white */
+  --line: #e5e7eb;
+  --line-strong: #c4c9d1;
+  --accent: #1d4ed8; /* 6.7:1 on white */
+  --accent-hover: #1e40af;
   --accent-text: #ffffff;
-  --tag: #e8ebf0;
-  --best: #15803d;
-  --best-bg: #dcfce7;
-  --delayed-bg: #fef3c7;
-  --delayed-border: #d97706;
-  --error: #b91c1c;
-  --error-bg: #fee2e2;
-  --weichberger: #b91c1c;
-  --goeggel: #c2410c;
-  --radius: 10px;
+  --best-bg: #ecfdf3;
+  --best-line: #86efac;
+  --best-text: #166534; /* 7:1 on --best-bg */
+  --delayed-bg: #fef9c3;
+  --delayed-line: #eab308;
+  --delayed-text: #713f12;
+  --error-bg: #fef2f2;
+  --error-text: #b91c1c;
+  --radius: 8px;
   --tap: 44px;
+  --z-sticky: 10;
   color-scheme: light;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #111318;
-    --surface: #1b1e25;
-    --text: #eceef2;
-    --muted: #a3a9b6;
-    --border: #343946;
-    --accent: #3b82f6;
-    --tag: #272b35;
-    --best: #4ade80;
-    --best-bg: #14361f;
-    --delayed-bg: #3b2f0b;
-    --delayed-border: #f59e0b;
-    --error: #fca5a5;
-    --error-bg: #3f1515;
-    --weichberger: #f87171;
-    --goeggel: #fb923c;
-    color-scheme: dark;
-  }
 }
 
 * {
   box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -51,7 +37,7 @@ body {
   background: var(--bg);
   color: var(--text);
   font:
-    16px/1.4 system-ui,
+    16px/1.45 system-ui,
     -apple-system,
     'Segoe UI',
     Roboto,
@@ -59,49 +45,52 @@ body {
 }
 
 .app {
-  max-width: 960px;
+  max-width: 1240px;
   margin: 0 auto;
-  padding: 16px;
+  padding: 0 max(16px, env(safe-area-inset-right)) 32px max(16px, env(safe-area-inset-left));
 }
 
-.app__head h1 {
-  margin: 0 0 16px;
-  font-size: 1.4rem;
+.topbar {
+  padding: 14px 0 6px;
 }
 
-/* --- forms --- */
+.topbar h1 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+/* ---------- form ---------- */
 .search,
 .code {
   display: grid;
-  gap: 16px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 16px;
+  gap: 18px;
+  padding: 8px 0 20px;
 }
 
 .code {
   max-width: 360px;
+  gap: 10px;
 }
 
 label,
 .tag-group__label {
   display: block;
-  font-weight: 600;
-  font-size: 0.9rem;
   margin-bottom: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
 }
 
-input,
-select {
+select,
+input {
   width: 100%;
   min-height: var(--tap);
   padding: 8px 10px;
-  font: inherit;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--bg);
   color: var(--text);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  font: inherit;
 }
 
 .size {
@@ -123,40 +112,72 @@ select {
   gap: 8px;
 }
 
-.tag {
+/* quantity and season: one row of equally wide tags */
+.tag-group--even .tag-group__tags {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+}
+
+.tag,
+.button {
   min-height: var(--tap);
-  padding: 8px 14px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--tag);
+  padding: 6px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--bg);
   color: var(--text);
   font: inherit;
   cursor: pointer;
+  transition:
+    background-color 150ms ease-out,
+    border-color 150ms ease-out;
+}
+
+.button {
+  font-weight: 600;
 }
 
 .tag--active {
-  background: var(--accent);
   border-color: var(--accent);
+  background: var(--accent);
   color: var(--accent-text);
   font-weight: 600;
 }
 
 .tag--more {
-  background: transparent;
-  border-style: dashed;
-  color: var(--muted);
+  border-color: transparent;
+  background: none;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .search__submit {
-  min-height: 52px;
+  min-height: 48px;
   border: 0;
   border-radius: var(--radius);
   background: var(--accent);
   color: var(--accent-text);
   font: inherit;
-  font-size: 1.1rem;
+  font-size: 1.0625rem;
   font-weight: 700;
   cursor: pointer;
+  transition: background-color 150ms ease-out;
+}
+
+@media (hover: hover) {
+  .tag:hover,
+  .button:hover {
+    border-color: var(--text);
+  }
+  .tag--active:hover,
+  .search__submit:hover {
+    background: var(--accent-hover);
+  }
+  .tag--more:hover {
+    border-color: transparent;
+  }
 }
 
 button:focus-visible,
@@ -168,118 +189,206 @@ input:focus-visible {
 
 .error {
   margin: 0;
-  color: var(--error);
+  color: var(--error-text);
   font-weight: 600;
 }
 
-/* --- status per shop --- */
+/* ---------- summary bar (phones/tablets after a search) ---------- */
+/* The folded panel sticks to the top (sticky needs the tall page as its container,
+   so the panel sticks, not the summary inside it). */
+.panel[data-collapsed='true'] {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  background: var(--bg);
+}
+
+.summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.summary__text {
+  font-weight: 600;
+}
+
+.panel[data-collapsed='true'] .search {
+  display: none;
+}
+
+/* ---------- status per shop ---------- */
 .status {
-  display: grid;
-  gap: 6px;
-  margin: 16px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.status:empty {
+  display: none;
 }
 
 .status__line {
   margin: 0;
-  padding: 8px 12px;
-  border-radius: 8px;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.9375rem;
 }
 
 .status__line--error {
+  flex-basis: 100%;
+  padding: 6px 10px;
+  border-radius: var(--radius);
   background: var(--error-bg);
-  border-color: var(--error);
-  color: var(--error);
+  color: var(--error-text);
   font-weight: 600;
 }
 
-/* --- results --- */
-.results {
-  display: grid;
-  gap: 12px;
+/* ---------- results ---------- */
+.tyre {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
 }
 
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 12px 14px;
-}
-
-.card__title {
+.tyre__title {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: 1rem;
+  font-weight: 700;
 }
 
-.card__meta {
+.tyre__meta {
   margin: 2px 0 8px;
   color: var(--muted);
+  font-size: 0.875rem;
 }
 
 .offers {
-  list-style: none;
+  display: grid;
+  gap: 4px;
   margin: 0;
   padding: 0;
-  display: grid;
-  gap: 6px;
+  list-style: none;
 }
 
+/* phone: shop + price on the first line, delivery/stock below */
 .offer {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    'who price'
+    'info info';
+  align-items: baseline;
+  gap: 2px 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.offer__who {
+  grid-area: who;
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 4px 12px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
+  gap: 2px 10px;
 }
 
-.offer--best {
-  border-color: var(--best);
-  background: var(--best-bg);
+.offer__shop {
+  font-weight: 600;
 }
 
-.offer--delayed {
-  background: var(--delayed-bg);
-  border-color: var(--delayed-border);
-}
-
-.shop {
-  font-weight: 700;
-  min-width: 7.5em;
-}
-
-.shop--weichberger {
-  color: var(--weichberger);
-}
-
-.shop--goeggel {
-  color: var(--goeggel);
+.offer__info {
+  grid-area: info;
+  color: var(--muted);
+  font-size: 0.875rem;
 }
 
 .offer__price {
-  font-size: 1.15rem;
+  grid-area: price;
+  font-size: 1.125rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.offer--best {
+  border-color: var(--best-line);
+  background: var(--best-bg);
 }
 
 .badge {
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: var(--best);
-  color: var(--surface);
-  font-size: 0.8rem;
+  color: var(--best-text);
+  font-size: 0.8125rem;
   font-weight: 700;
 }
 
-.offer__stock {
-  color: var(--muted);
-  font-size: 0.9rem;
+.offer--delayed {
+  border-color: var(--delayed-line);
+  background: var(--delayed-bg);
 }
 
-.hint {
-  font-size: 0.85rem;
-  color: var(--muted);
-  font-style: italic;
+.offer--delayed .offer__delivery {
+  color: var(--delayed-text);
+  font-weight: 600;
+}
+
+/* wider: one line per offer, prices aligned on the right */
+@media (min-width: 640px) {
+  .offer {
+    grid-template-columns: minmax(9rem, 14rem) 1fr auto;
+    grid-template-areas: 'who info price';
+    align-items: center;
+  }
+}
+
+/* laptop and up: filters in a side column, always visible */
+@media (min-width: 1024px) {
+  .layout {
+    display: grid;
+    grid-template-columns: 340px minmax(0, 1fr);
+    align-items: start;
+    gap: 40px;
+  }
+
+  .panel {
+    position: sticky;
+    top: 0;
+    max-height: 100vh;
+    overflow-y: auto;
+  }
+
+  .panel[data-collapsed='true'] .search {
+    display: grid;
+  }
+
+  .summary {
+    display: none;
+  }
+
+  .status {
+    padding-top: 8px;
+  }
+}
+
+/* mouse/trackpad: slightly denser controls */
+@media (pointer: fine) {
+  .tag,
+  .button {
+    min-height: 38px;
+  }
+  select,
+  input {
+    min-height: 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
 }
