@@ -82,6 +82,34 @@ describe('App', () => {
     expect(search).toHaveBeenCalledWith('goeggel', expected, 'abc')
   })
 
+  it('phone flow: after searching, the form folds into a summary with "Ändern"', async () => {
+    localStorage.setItem('werkstatt-code', 'abc')
+    const user = userEvent.setup()
+    render(<App search={searchWith({})} />)
+    const panel = screen.getByTestId('search-panel')
+    expect(panel).toHaveAttribute('data-collapsed', 'false')
+    expect(screen.queryByTestId('search-summary')).toBeNull()
+
+    await user.selectOptions(screen.getByLabelText('Zoll'), '17')
+    await user.click(screen.getByRole('button', { name: /Winter/ }))
+    await user.click(screen.getByRole('button', { name: /MICHELIN/ }))
+    await user.click(screen.getByRole('button', { name: 'Suchen' }))
+    expect(panel).toHaveAttribute('data-collapsed', 'true')
+    expect(screen.getByTestId('search-summary')).toHaveTextContent(
+      '205/55 R17 · 4 Stk · Winter · MICHELIN',
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Ändern' }))
+    expect(panel).toHaveAttribute('data-collapsed', 'false')
+    expect(screen.queryByTestId('search-summary')).toBeNull()
+    expect(screen.getByLabelText('Zoll')).toHaveValue('17') // previous input is kept
+  })
+
+  it('uses the singular for a single offer', async () => {
+    await renderAndSearch(searchWith({ goeggel: async () => ok('goeggel', [offer()]) }))
+    expect(await screen.findByText('Göggel: 1 Angebot')).toBeInTheDocument()
+  })
+
   it('AC4: shows the offers of one shop while the other is still loading', async () => {
     await renderAndSearch(
       searchWith({ goeggel: async () => ok('goeggel', [offer()]), weichberger: never }),
