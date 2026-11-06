@@ -138,11 +138,11 @@ input {
   font-weight: 600;
 }
 
+/* same font weight as inactive tags: bold text is wider and made the rows jump */
 .tag--active {
   border-color: var(--accent);
   background: var(--accent);
   color: var(--accent-text);
-  font-weight: 600;
 }
 
 .tag--more {
