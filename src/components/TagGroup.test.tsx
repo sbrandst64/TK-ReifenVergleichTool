@@ -35,7 +35,7 @@ describe('TagGroup', () => {
     expect(screen.getByRole('button', { name: /Tag B/ })).toHaveAttribute('aria-pressed', 'true')
   })
 
-  it('AC5a: the active state is visible without colour (check mark)', () => {
+  it('AC5a: selecting keeps the label unchanged (no check mark, so tags do not shift)', () => {
     render(
       <TagGroup
         label="Marke"
@@ -45,8 +45,11 @@ describe('TagGroup', () => {
         mode="multi"
       />,
     )
-    expect(screen.getByRole('button', { name: /Tag C/ })).toHaveTextContent('✓')
-    expect(screen.getByRole('button', { name: /Tag A/ })).not.toHaveTextContent('✓')
+    const active = screen.getByRole('button', { name: 'Tag C' })
+    expect(active).toHaveTextContent(/^Tag C$/)
+    expect(active).toHaveAttribute('aria-pressed', 'true')
+    expect(active).toHaveClass('tag--active')
+    expect(screen.getByRole('button', { name: 'Tag A' })).toHaveAttribute('aria-pressed', 'false')
   })
 
   it('AC5a: single mode replaces the selection and never deselects', async () => {
