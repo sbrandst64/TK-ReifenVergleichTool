@@ -102,6 +102,9 @@ aufgeführt und gelten, solange niemand widerspricht.
 - **Gelb** markiert ist ein Weichberger-Angebot, das die Stückzahl nur zusammen mit dem Nebenlager
   (2–3 Tage) erreicht (E10). Für Göggel ist offen, ob auch eine Lieferzeit ungleich „sofort“ gelb
   wird (§8).
+- **Verfügbarkeits-Tag** an jedem Angebot (Wunsch 2026-11-06): grün „Lagernd“ (Stückzahl sofort da),
+  gelb „2–3 Tage“ (nur mit Nebenlager, siehe oben), rot „Nicht lagernd“ (kein Bestand). Da weiterhin
+  nur lagernde Angebote angezeigt werden, kommt Rot derzeit nicht vor; der Tag ist vorbereitet.
 - Gibt es keine Treffer, zeigt die UI „Keine lagernden Reifen in dieser Größe“ pro Shop.
 
 ### 3.4 Auswahl und Warenkorb (Phase 3)
@@ -193,7 +196,7 @@ In Klammern steht die Phase. „Fixture-Daten“ heißt: anonymisierte, aufgezei
   LI/SI stehen zwei Angebote in einer Gruppe.
 - AC15 (P2) – Angebote mit unterschiedlichem LI oder SI stehen nie in derselben Gruppe.
 - AC16 (P2) – Ein Weichberger-Angebot, dessen Bestand in Filiale + Zentrallager unter der Stückzahl
-  liegt und erst mit dem Nebenlager reicht, ist gelb markiert.
+  liegt und erst mit dem Nebenlager reicht, ist gelb markiert (gelber Tag „2–3 Tage“, siehe AC30).
 - AC17 (P2) – Gruppen sind nach ihrem günstigsten Endkundenpreis aufsteigend sortiert.
 
 **Warenkorb**
@@ -223,7 +226,11 @@ In Klammern steht die Phase. „Fixture-Daten“ heißt: anonymisierte, aufgezei
 - AC28 (P2) – Jede Angebotszeile zeigt das Logo ihres Shops mit dem Shopnamen als Alternativtext,
   auf einem Schild in der Shopfarbe (Weichberger weiß/dunkelblau, Göggel dunkel).
 - AC29 (P2, manuell) – Der Filterbereich hat einen eigenen, hellen Hintergrund und ist so klar von der
-  weißen Reifenliste getrennt.
+  weißen Reifenliste getrennt. Am PC (ab 1024 px) ist er fest am linken Bildschirmrand verankert,
+  in voller Höhe, und die Reifenliste nutzt die gesamte restliche Breite des Browsers.
+- AC30 (P2) – Jedes Angebot trägt genau einen Verfügbarkeits-Tag: „Lagernd“ (grün), wenn die
+  Stückzahl sofort verfügbar ist; „2–3 Tage“ (gelb), wenn sie nur mit dem Nebenlager reicht;
+  „Nicht lagernd“ (rot) bei Bestand 0.
 
 ## 6. Architektur (Kurzfassung)
 

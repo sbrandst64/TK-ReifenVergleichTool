@@ -209,7 +209,7 @@ describe('App', () => {
     )
     const row = await screen.findByRole('listitem')
     expect(row).toHaveAttribute('data-delayed', 'true')
-    expect(row).toHaveTextContent('Nebenlager (2–3 Tage)')
+    expect(row.querySelector('.avail--yellow')).toHaveTextContent('2–3 Tage')
   })
 
   it('AC11: marks a provisional cheapest offer and missing shipping', async () => {
