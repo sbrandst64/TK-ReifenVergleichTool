@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | Entwurf v3 (Review eingearbeitet, Filter als Tags) – wartet auf Freigabe |
+| Status | v3 freigegeben (2026-11-06), Anpassungen aus dem ersten Build in §3.1, AC6, AC23, §8 |
 | Tiefe | Light Spec (Produktentscheidungen, kein Fiskal-/Rechtsbezug) |
 | Stand | 2026-11-06 |
 | Grundlage | [phase0-recon.md](phase0-recon.md) (Analyse) und Entscheidungen des Nutzers vom 2026-11-06 |
@@ -57,8 +57,9 @@ aufgeführt und gelten, solange niemand widerspricht.
   - Weichberger: Mengenfilter des Shops `quantity=<Stückzahl>` (E3).
   - Göggel: Der Adapter setzt „nur verfügbare“ ausdrücklich und prüft den Zustand im Filter-HTML,
     statt sich auf den Standard zu verlassen (E5). Zusätzlich gilt Stückzahl je Zeile ≥ Stückzahl.
-- **Günstigste zuerst** (E10): Beide Shops werden nach Netto-EK aufsteigend abgefragt. Der Adapter
-  prüft die Reihenfolge der gelieferten Preise; ist sie nicht aufsteigend, meldet er `LAYOUT_CHANGED`.
+- **Günstigste zuerst** (E10): Beide Shops werden nach Netto-EK aufsteigend abgefragt und blättern, bis
+  N lagernde Angebote gefunden sind. Die Shop-Reihenfolge ist nicht streng (Göggel: z. B. 41,03 vor
+  41,00), deshalb sortiert der Adapter das Ergebnis selbst nach Netto-EK.
 - Pro Shop werden höchstens **N** passende Angebote geholt, über so viele Seiten wie nötig.
   N = 20, einstellbar als Function-Secret `MAX_OFFERS_PER_SHOP`. **[Annahme]**
 - **Marke** und **Saison** werden nur an die Shops übergeben, wenn mindestens ein Tag aktiv ist (E10).
@@ -168,8 +169,7 @@ In Klammern steht die Phase. „Fixture-Daten“ heißt: anonymisierte, aufgezei
 - AC5a (P2) – Ein Tipp auf einen Saison- oder Marken-Tag schaltet ihn an oder aus, und der Zustand ist
   auch ohne Farbe erkennbar. Ein Tipp auf einen Stückzahl-Tag aktiviert ihn und deaktiviert den
   vorherigen.
-- AC6 (P1) – Pro Shop kommen höchstens N Angebote, und innerhalb eines Shops steigen die Netto-EK
-  nicht ab. Stehen in den Fixture-Daten mehr als N passende Angebote, werden nur die N günstigsten geliefert.
+- AC6 (P1) – Pro Shop kommen höchstens N Angebote, nach Netto-EK aufsteigend sortiert. Stehen in den Fixture-Daten mehr als N passende Angebote, werden nur die N günstigsten geliefert.
 - AC7 (P2) – Gibt es für eine Größe keine lagernden Angebote, zeigt die UI pro Shop „Keine lagernden
   Reifen in dieser Größe“.
 
@@ -206,7 +206,7 @@ In Klammern steht die Phase. „Fixture-Daten“ heißt: anonymisierte, aufgezei
 **Fehler / Sicherheit**
 - AC22 (P1/P4) – Bei falschen Shop-Zugangsdaten zeigt die UI für diesen Shop „Anmeldung
   fehlgeschlagen – Zugangsdaten prüfen“. Der andere Shop funktioniert weiter.
-- AC23 (P1/P4) – Fehlt im Shop-HTML ein Pflichtfeld oder sind die Preise nicht aufsteigend, zeigt die
+- AC23 (P1/P4) – Fehlt im Shop-HTML ein Pflichtfeld, zeigt die
   UI „Shop-Seite hat sich geändert – Adapter prüfen“ statt Preisen dieses Shops.
 - AC24 (P1/P4) – Antwortet ein Shop länger als 60 s nicht, zeigt die UI „Shop antwortet nicht“. Bei
   HTTP 403/429 zeigt sie „Shop blockiert Anfragen“. Bei abgelaufener Session zeigt sie „Sitzung
@@ -269,7 +269,14 @@ Technisch, durch Spikes zu klären:
     Beendet ein zweiter Login mit demselben Account die erste Session (z. B. die des Onkels im Browser)?
     (Spike Phase 3)
 14. Weichberger-Session-Timeout und ob ~100 Logins pro Tag eine Sperre riskieren.
-15. Welcher Göggel-Parameter sortiert sicher aufsteigend, und ist „nur verfügbare“ nach dem Login immer aktiv?
+15. ~~Göggel-Sortierung~~ geklärt: Standard ist „Nettopreis aufsteigend“ (nicht streng); „nur verfügbare“
+    ist Standard, heißt aber nicht „lagernd“ (viele Treffer mit Eigenbestand 0, „ca. 3 Tage“). Der Adapter
+    filtert deshalb selbst nach Stückzahl.
+18. **Göggel-EAN dauert:** Der Shop beantwortet Anfragen einer Sitzung nacheinander (≈ 0,65 s je EAN),
+    bei 20 Angeboten ≈ 13 s zusätzlich. Optionen: EAN-Cache (Göggel-Nr → EAN) in Supabase, oder EAN nur
+    per Fallback-Schlüssel abgleichen.
+19. **Wenig Überschneidung ohne Markenfilter:** Die je 20 günstigsten lagernden Reifen beider Shops sind
+    in der Praxis oft verschiedene Produkte (Test 205/55 R16: 0 gemeinsame Karten; mit BRIDGESTONE 7).
 16. Stimmen die Markennamen der beiden Shops überein, oder braucht die Zuordnungstabelle Einträge?
 17. Können die Shops mehrere Marken bzw. Saisonen in einer Abfrage filtern? Sonst gilt eine Abfrage
     je Wert. Wie lange dauert das bei Weichberger, z. B. bei 3 Marken?
