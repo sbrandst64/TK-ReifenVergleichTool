@@ -1,0 +1,7 @@
+# Supabase CLI project config (only what this project needs).
+project_id = "reifen-preisvergleich"
+
+[functions.search]
+# Access is protected by the workshop code inside the function (spec 3.6),
+# so the Supabase JWT check is not needed for this public frontend.
+verify_jwt = false

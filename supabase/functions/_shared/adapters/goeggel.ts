@@ -200,13 +200,18 @@ export async function searchGoeggel(query: SearchQuery, deps: AdapterDeps): Prom
     timeoutMs: deps.timeoutMs,
   })
   await login(session, deps.credentials)
+  return runGoeggelSearch(session, query, deps.maxOffers)
+}
+
+/** Search part only, for an already logged-in session. */
+export async function runGoeggelSearch(session: ShopSession, query: SearchQuery, maxOffers: number): Promise<ShopOffer[]> {
   const all = new Map<string, ShopOffer>()
   for (const combo of searchCombos(query)) {
-    for (const o of await searchCombo(session, query, combo, deps.maxOffers)) {
+    for (const o of await searchCombo(session, query, combo, maxOffers)) {
       if (!all.has(o.shopArticleId)) all.set(o.shopArticleId, o)
     }
   }
-  const offers = [...all.values()].sort((a, b) => a.netEkCents - b.netEkCents).slice(0, deps.maxOffers)
+  const offers = [...all.values()].sort((a, b) => a.netEkCents - b.netEkCents).slice(0, maxOffers)
   await fillEans(session, offers)
   return offers
 }

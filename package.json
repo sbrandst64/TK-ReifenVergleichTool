@@ -14,7 +14,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check:deno": "deno check supabase/functions/search/index.ts",
+    "check:deno": "deno check --config supabase/functions/search/deno.json supabase/functions/search/index.ts",
     "fixtures": "node scripts/anonymize-fixtures.ts"
   },
   "keywords": [],

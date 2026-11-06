@@ -197,16 +197,26 @@ export async function searchWeichberger(query: SearchQuery, deps: AdapterDeps): 
     timeoutMs: deps.timeoutMs,
   })
   const base = await login(session, deps.credentials)
+  return runWeichbergerSearch(session, base, query, deps.maxOffers)
+}
+
+/** Search part only, for an already logged-in session (base path e.g. "/115"). */
+export async function runWeichbergerSearch(
+  session: ShopSession,
+  base: string,
+  query: SearchQuery,
+  maxOffers: number,
+): Promise<ShopOffer[]> {
   const cat = await categoryId(session, base)
   const all = new Map<string, ShopOffer>()
   // Sequential on purpose: the search lives in the server session (spec 3.1).
   for (const combo of searchCombos(query)) {
-    for (const o of await searchCombo(session, base, cat, query, combo, deps.maxOffers)) {
+    for (const o of await searchCombo(session, base, cat, query, combo, maxOffers)) {
       if (!all.has(o.shopArticleId)) all.set(o.shopArticleId, o)
     }
   }
   return [...all.values()]
     .filter((o) => o.stockTotal >= query.quantity)
     .sort((a, b) => a.netEkCents - b.netEkCents)
-    .slice(0, deps.maxOffers)
+    .slice(0, maxOffers)
 }
