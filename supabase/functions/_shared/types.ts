@@ -74,7 +74,7 @@ export class AdapterError extends Error {
 }
 
 export interface SearchResponse {
-  shop: ShopId
+  shop: ShopId | null
   offers: TireOffer[]
   error: null | { code: ApiErrorCode; message: string }
 }

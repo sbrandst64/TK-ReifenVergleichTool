@@ -137,6 +137,11 @@ describe('parseGoeggelResults', () => {
     expect(kumho).toMatchObject({ brand: 'KUMHO', stockImmediate: 184, stockTotal: 184, deliveryNote: 'sofort' })
   })
 
+  it('keeps rows without load index, taking the speed index from the size', () => {
+    const nankang = offers.find((o) => o.brand === 'NANKANG')
+    expect(nankang).toMatchObject({ profile: 'NA-1', loadIndex: '', speedIndex: 'V', width: 205 })
+  })
+
   it('returns no offers for an empty table', () => {
     expect(parseGoeggelResults('')).toEqual([])
   })
