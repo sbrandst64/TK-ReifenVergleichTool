@@ -1,11 +1,24 @@
 // One block per tyre, one row per shop offer (spec 3.3).
 // Row layout: phone = shop + price on line 1, delivery/stock on line 2; wide = one line.
 import type { OfferGroup } from '../../supabase/functions/_shared/matching.ts'
-import type { ShopId } from '../../supabase/functions/_shared/types.ts'
+import type { ShopId, TireOffer } from '../../supabase/functions/_shared/types.ts'
 import { formatEuro, SHOP_LABEL } from '../messages.ts'
 import { SEASON_OPTIONS } from '../options.ts'
 
 const seasonLabel = (s: string | null) => SEASON_OPTIONS.find((o) => o.value === s)?.label
+
+/** Availability at a glance (AC30): green = in stock now, yellow = needs the slower stock,
+    red = no stock (prepared; only in-stock offers are listed today). */
+function availability(o: TireOffer): { tone: 'green' | 'yellow' | 'red'; label: string } {
+  if (o.stockTotal <= 0) return { tone: 'red', label: 'Nicht lagernd' }
+  if (o.delayed) return { tone: 'yellow', label: '2–3 Tage' }
+  return { tone: 'green', label: 'Lagernd' }
+}
+
+function AvailabilityTag({ offer }: { offer: TireOffer }) {
+  const { tone, label } = availability(offer)
+  return <span className={`avail avail--${tone}`}>{label}</span>
+}
 
 /** Shop logo on a badge in the shop's colour, so the source is clear at a glance (AC28). */
 function ShopBadge({ shop }: { shop: ShopId }) {
@@ -40,9 +53,7 @@ function TyreGroup({ group }: { group: OfferGroup }) {
           return (
             <li
               key={`${o.shop}-${o.shopArticleId}`}
-              className={['offer', best && 'offer--best', o.delayed && 'offer--delayed']
-                .filter(Boolean)
-                .join(' ')}
+              className={best ? 'offer offer--best' : 'offer'}
               data-delayed={String(o.delayed)}
             >
               <span className="offer__who">
@@ -54,8 +65,12 @@ function TyreGroup({ group }: { group: OfferGroup }) {
                 )}
               </span>
               <span className="offer__info">
-                <span className="offer__delivery">{o.deliveryNote}</span>
-                <span> · {o.stockTotal} Stk lagernd</span>
+                <AvailabilityTag offer={o} />
+                <span className="offer__stock">
+                  {/* the tag already says how long; keep only "Nebenlager" from the note */}
+                  {o.delayed ? `${o.deliveryNote.replace(/\s*\(.*\)\s*$/, '')} · ` : ''}
+                  {o.stockTotal} Stk
+                </span>
                 {!o.shippingConfigured && (
                   <>
                     <span aria-hidden="true"> · </span>
