@@ -46,6 +46,8 @@ aufgeführt und gelten, solange niemand widerspricht.
   - **Marke** als Tags, mehrere wählbar. Kein Tag aktiv = alle Marken. Feste Liste im Frontend
     (Startliste E12) mit Zuordnung je Shop-Schreibweise. Die häufigsten Marken sind sichtbar, der Rest
     hinter „Alle Marken anzeigen“. **[Annahme]** (welche zuerst sichtbar sind)
+  - **Anbieter** als Tags Beide · Weichberger · Göggel. Genau ein Tag ist aktiv, Standard Beide. Nur
+    die gewählten Shops werden abgefragt (Wunsch 2026-11-06).
   - Tags sind große Tippflächen. Aktiv = blau gefüllt, inaktiv = weiß mit Rahmen (Helligkeitsunterschied,
     nicht nur Farbton). Kein Häkchen, damit sich die Tags beim Antippen nicht verschieben (Wunsch 2026-11-06).
 - **Mehrfachauswahl im Adapter:** Kann ein Shop mehrere Werte in einer Abfrage filtern, nutzt der
@@ -215,6 +217,13 @@ In Klammern steht die Phase. „Fixture-Daten“ heißt: anonymisierte, aufgezei
 - AC25 (P1) – Ein Aufruf ohne oder mit falschem Werkstatt-Code liefert 401 und keine Daten.
 - AC26 (P1) – Weder das Frontend-Bundle noch eine Function-Antwort noch ein Log enthält
   Shop-Zugangsdaten.
+- AC27 (P2) – Ist im Anbieter-Filter „Weichberger“ aktiv, wird nur Weichberger abgefragt. Für Göggel
+  erscheinen weder Statuszeile noch Angebote, und die Zusammenfassung nennt „Weichberger“. Mit
+  „Göggel“ gilt das umgekehrt. Standard ist „Beide“.
+- AC28 (P2) – Jede Angebotszeile zeigt das Logo ihres Shops mit dem Shopnamen als Alternativtext,
+  auf einem Schild in der Shopfarbe (Weichberger weiß/dunkelblau, Göggel dunkel).
+- AC29 (P2, manuell) – Der Filterbereich hat einen eigenen, hellen Hintergrund und ist so klar von der
+  weißen Reifenliste getrennt.
 
 ## 6. Architektur (Kurzfassung)
 

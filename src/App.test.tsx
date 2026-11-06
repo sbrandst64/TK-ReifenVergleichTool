@@ -152,11 +152,50 @@ describe('App', () => {
     const cards = screen.getAllByRole('article')
     expect(cards).toHaveLength(1)
     const rows = within(cards[0]).getAllByRole('listitem')
-    expect(rows[0]).toHaveTextContent('Göggel')
+    expect(within(rows[0]).getByRole('img', { name: 'Göggel' })).toBeInTheDocument()
     expect(rows[0]).toHaveTextContent('Günstigster')
     expect(rows[0]).toHaveTextContent(/107,00/)
-    expect(rows[1]).toHaveTextContent('Weichberger')
+    expect(within(rows[1]).getByRole('img', { name: 'Weichberger' })).toBeInTheDocument()
     expect(rows[1]).not.toHaveTextContent('Günstigster')
+  })
+
+  it('AC28: every offer row shows its shop logo on a shop-coloured badge', async () => {
+    await renderAndSearch(
+      searchWith({
+        goeggel: async () => ok('goeggel', [offer({ ean: '7' })]),
+        weichberger: async () => ok('weichberger', [offer({ shop: 'weichberger', ean: '7' })]),
+      }),
+    )
+    const goeggelLogo = await screen.findByRole('img', { name: 'Göggel' })
+    expect(goeggelLogo.getAttribute('src')).toMatch(/logos\/goeggel\.png$/)
+    expect(goeggelLogo.closest('.shop-badge')).toHaveClass('shop-badge--goeggel')
+    const weichbergerLogo = screen.getByRole('img', { name: 'Weichberger' })
+    expect(weichbergerLogo.getAttribute('src')).toMatch(/logos\/weichberger\.png$/)
+    expect(weichbergerLogo.closest('.shop-badge')).toHaveClass('shop-badge--weichberger')
+  })
+
+  it('AC27: the provider filter searches only the chosen shop', async () => {
+    localStorage.setItem('werkstatt-code', 'abc')
+    const search = searchWith({
+      weichberger: async () => ok('weichberger', [offer({ shop: 'weichberger' })]),
+    })
+    const user = userEvent.setup()
+    render(<App search={search} />)
+    const providers = screen.getByRole('group', { name: 'Anbieter' })
+    expect(within(providers).getByRole('button', { name: 'Beide' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    await user.click(within(providers).getByRole('button', { name: 'Weichberger' }))
+    await user.click(screen.getByRole('button', { name: 'Suchen' }))
+
+    expect(search).toHaveBeenCalledTimes(1)
+    expect(search).toHaveBeenCalledWith('weichberger', expect.anything(), 'abc')
+    expect(await screen.findByText('Weichberger: 1 Angebot')).toBeInTheDocument()
+    expect(screen.queryByTestId('status-goeggel')).toBeNull()
+    expect(screen.getByTestId('search-summary')).toHaveTextContent(
+      '205/55 R16 · 4 Stk · Weichberger',
+    )
   })
 
   it('AC16: marks offers that need the slower stock in yellow', async () => {
