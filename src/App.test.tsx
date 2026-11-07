@@ -128,6 +128,17 @@ describe('App', () => {
     expect(screen.getByTestId('status-weichberger')).toHaveTextContent('lädt')
   })
 
+  it('shows a spinning circle instead of dots while a shop is loading', async () => {
+    await renderAndSearch(
+      searchWith({ goeggel: async () => ok('goeggel', [offer()]), weichberger: never }),
+    )
+    await screen.findByRole('article')
+    const loading = screen.getByTestId('status-weichberger')
+    expect(loading.querySelector('.spinner')).not.toBeNull()
+    expect(loading).not.toHaveTextContent('…')
+    expect(screen.getByTestId('status-goeggel').querySelector('.spinner')).toBeNull()
+  })
+
   it('AC22: shows a clear message for a failing shop and keeps the other', async () => {
     await renderAndSearch(
       searchWith({
