@@ -207,7 +207,19 @@ export function App({
   return (
     <main className={selection.length > 0 ? 'app app--selection' : 'app'}>
       <header className="topbar">
-        <h1>Reifen-Preisvergleich</h1>
+        <div className="topbar__title">
+          {/* workshop logo, cut from the header of the offer template; PC: top of the left panel */}
+          <div className="brand">
+            <img
+              className="brand__logo"
+              src={`${import.meta.env.BASE_URL}logos/tk-kopf.jpg`}
+              alt="TK Kopf GmbH"
+              width={566}
+              height={238}
+            />
+          </div>
+          <h1>Reifen-Preisvergleich</h1>
+        </div>
         {code && (
           <button
             type="button"

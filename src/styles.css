@@ -68,6 +68,39 @@ body {
   font-weight: 700;
 }
 
+.topbar__title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* TK Kopf logo (yellow badge as on the letterhead) */
+.brand__logo {
+  display: block;
+  width: auto;
+  height: 40px;
+  border-radius: 6px;
+}
+
+.topbar__settings {
+  flex: none;
+  white-space: nowrap;
+}
+
+/* narrow phones: logo, title and settings still fit on one line */
+@media (max-width: 479px) {
+  .topbar__title {
+    gap: 10px;
+  }
+  .brand__logo {
+    height: 32px;
+  }
+  .topbar h1 {
+    font-size: 1rem;
+  }
+}
+
 /* ---------- settings dialog (PDF texts) ---------- */
 .modal {
   position: fixed;
@@ -710,6 +743,28 @@ input:focus-visible {
 
   .panel[data-collapsed='true'] .search {
     display: grid;
+  }
+
+  /* logo sits on top of the left panel; the filters scroll underneath it */
+  .brand {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: calc(var(--z-sticky) + 1);
+    width: var(--sidebar);
+    padding: 16px 20px 14px;
+    border-right: 1px solid var(--panel-line);
+    border-bottom: 1px solid var(--panel-line);
+    background: var(--panel-bg);
+  }
+
+  .brand__logo {
+    height: 72px;
+  }
+
+  .panel,
+  .panel[data-collapsed='true'] {
+    padding-top: 116px;
   }
 
   .panel[data-collapsed='true'] .selection {
