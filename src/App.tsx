@@ -66,7 +66,7 @@ function statusText(shop: ShopId, state: ShopState): string {
     case 'idle':
       return ''
     case 'loading':
-      return `${SHOP_LABEL[shop]}: lädt …`
+      return `${SHOP_LABEL[shop]}: lädt`
     case 'error':
       return state.message
     case 'done': {
@@ -253,6 +253,7 @@ export function App({
                     className={`status__line status__line--${state.status}`}
                   >
                     {text}
+                    {state.status === 'loading' && <span className="spinner" aria-hidden="true" />}
                   </p>
                 ) : null
               })}
