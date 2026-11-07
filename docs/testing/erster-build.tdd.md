@@ -42,6 +42,8 @@ Stand 2026-11-06, Branch `feat/erster-build`.
 | 20 | Dienst `settings`: Vorlage solange leer, 401/400/413/405/500/502, Prüfung der Texte, Supabase-Ablage per PostgREST (AC40) | `test/backend/settings-handler.test.ts`, `pdf-texts.test.ts`, `settings-store-supabase.test.ts` | integration |
 | 21 | Göggel: JS-Weiterleitung auf login.php = SESSION_EXPIRED statt LAYOUT_CHANGED (AC41) | `test/backend/goeggel.test.ts` | unit |
 | 22 | PDF-Texte live: speichern am PC, über WLAN-Adresse mit gleichem Ergebnis gelesen, PDF mit neuen Texten gerendert | manuell | manuell |
+| 23 | Ladekreis statt Punkte pro Shop beim Laden. RED: 7009a4c | `src/App.test.tsx` | component |
+| 24 | Auswahl-Liste und „Auswahl aufheben“ links unter „Suchen“, „Angebot als PDF“ schwebt außerhalb unten rechts (AC31). RED: 1181656 | `src/App.test.tsx` | component |
 | 14 | Filterbereich farblich abgesetzt, Logos lesbar, Tags springen nicht (AC29, manuell) | Browser bei 375, 768, 1024, 1280 px | manuell |
 
 ## Zusätzlich manuell verifiziert (nicht automatisiert)

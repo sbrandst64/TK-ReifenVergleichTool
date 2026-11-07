@@ -20,7 +20,7 @@ import {
 import { CodePrompt } from './components/CodePrompt.tsx'
 import { offerKey, ResultList } from './components/ResultList.tsx'
 import { SearchForm } from './components/SearchForm.tsx'
-import { SelectionBar } from './components/SelectionBar.tsx'
+import { SelectionActions, SelectionList } from './components/Selection.tsx'
 import { SettingsDialog } from './components/SettingsDialog.tsx'
 import { errorMessage, SHOP_LABEL } from './messages.ts'
 import { SEASON_OPTIONS } from './options.ts'
@@ -240,6 +240,11 @@ export function App({
               </div>
             )}
             <SearchForm onSearch={runSearch} />
+            <SelectionList
+              items={selection}
+              onRemove={(item) => toggle(item.offer)}
+              onClear={() => setSelection([])}
+            />
           </aside>
           <section className="results-col" aria-label="Suchergebnisse">
             <div className="status" aria-live="polite">
@@ -260,10 +265,8 @@ export function App({
             </div>
             <ResultList groups={groups} selected={selectedKeys} onToggle={toggle} />
           </section>
-          <SelectionBar
-            items={selection}
-            onRemove={(item) => toggle(item.offer)}
-            onClear={() => setSelection([])}
+          <SelectionActions
+            count={selection.length}
             onOfferPdf={() => makeOfferPdf(selection, pdfTexts)}
           />
         </div>
