@@ -745,26 +745,28 @@ input:focus-visible {
     display: grid;
   }
 
-  /* logo sits on top of the left panel; the filters scroll underneath it */
+  /* logo fills the top of the left panel edge to edge (full width, height from its own
+     566:238 ratio, so it is never stretched); the filters scroll underneath it */
   .brand {
     position: fixed;
     top: 0;
     left: 0;
     z-index: calc(var(--z-sticky) + 1);
     width: var(--sidebar);
-    padding: 16px 20px 14px;
     border-right: 1px solid var(--panel-line);
     border-bottom: 1px solid var(--panel-line);
     background: var(--panel-bg);
   }
 
   .brand__logo {
-    height: 72px;
+    width: 100%;
+    height: auto;
+    border-radius: 0;
   }
 
   .panel,
   .panel[data-collapsed='true'] {
-    padding-top: 116px;
+    padding-top: calc(var(--sidebar) * 238 / 566 + 14px);
   }
 
   .panel[data-collapsed='true'] .selection {
