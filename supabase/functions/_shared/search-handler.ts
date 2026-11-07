@@ -2,7 +2,8 @@
 // used by Deno (supabase/functions/search/index.ts) and the local Node dev server.
 import { searchGoeggel } from './adapters/goeggel.ts'
 import { searchWeichberger, type AdapterDeps } from './adapters/weichberger.ts'
-import { allowedOrigins, loadConfig, type AppConfig } from './config.ts'
+import { loadConfig, type AppConfig } from './config.ts'
+import { corsHeaders as cors, json, safeEqual, type Env } from './http-common.ts'
 import { toTireOffer } from './pricing.ts'
 import {
   AdapterError,
@@ -30,45 +31,14 @@ const PER_REQUEST_TIMEOUT_MS = 30000
 const BRAND = /^[A-Z0-9][A-Z0-9 .&'-]{0,39}$/
 const MAX_BRANDS = 8
 
-type Env = Record<string, string | undefined>
-
-function corsHeaders(req: Request, env: Env): Record<string, string> {
-  const origin = req.headers.get('origin')
-  if (!origin || !allowedOrigins(env).includes(origin)) return { vary: 'Origin' }
-  return {
-    'access-control-allow-origin': origin,
-    'access-control-allow-methods': 'POST, OPTIONS',
-    'access-control-allow-headers': 'content-type, x-werkstatt-code, authorization, apikey',
-    'access-control-max-age': '600',
-    vary: 'Origin',
-  }
-}
-
-function reply(status: number, body: SearchResponse, cors: Record<string, string>): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      ...cors,
-      'content-type': 'application/json; charset=utf-8',
-      'cache-control': 'no-store',
-    },
-  })
-}
+const reply = (status: number, body: SearchResponse, h: Record<string, string>) =>
+  json(status, body, h)
 
 const failure = (shop: ShopId | null, code: ApiErrorCode, message: string): SearchResponse => ({
   shop,
   offers: [],
   error: { code, message },
 })
-
-/** Constant-time comparison so the workshop code cannot be guessed via timing. */
-function safeEqual(a: string, b: string): boolean {
-  const x = new TextEncoder().encode(a)
-  const y = new TextEncoder().encode(b)
-  let diff = x.length ^ y.length
-  for (let i = 0; i < Math.max(x.length, y.length); i++) diff |= (x[i] ?? 0) ^ (y[i] ?? 0)
-  return diff === 0
-}
 
 const isInt = (v: unknown, min: number, max: number): v is number =>
   typeof v === 'number' && Number.isInteger(v) && v >= min && v <= max
@@ -118,21 +88,21 @@ export async function handleSearch(
   env: Env,
   deps: HandlerDeps = {},
 ): Promise<Response> {
-  const cors = corsHeaders(req, env)
-  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors })
+  const headers = cors(req, env, 'POST, OPTIONS')
+  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers })
   if (req.method !== 'POST')
-    return reply(405, failure(null, 'BAD_REQUEST', 'Nur POST erlaubt'), cors)
+    return reply(405, failure(null, 'BAD_REQUEST', 'Nur POST erlaubt'), headers)
 
   let config: AppConfig
   try {
     config = loadConfig(env)
   } catch (e) {
     console.error('search: configuration error:', (e as Error).message)
-    return reply(500, failure(null, 'CONFIG_ERROR', 'Server-Konfiguration fehlerhaft'), cors)
+    return reply(500, failure(null, 'CONFIG_ERROR', 'Server-Konfiguration fehlerhaft'), headers)
   }
 
   if (!safeEqual(req.headers.get('x-werkstatt-code') ?? '', config.werkstattCode)) {
-    return reply(401, failure(null, 'UNAUTHORIZED', 'Werkstatt-Code ungültig'), cors)
+    return reply(401, failure(null, 'UNAUTHORIZED', 'Werkstatt-Code ungültig'), headers)
   }
 
   let parsed: ReturnType<typeof parseRequest>
@@ -141,7 +111,7 @@ export async function handleSearch(
   } catch {
     parsed = null
   }
-  if (!parsed) return reply(400, failure(null, 'BAD_REQUEST', 'Ungültige Suchanfrage'), cors)
+  if (!parsed) return reply(400, failure(null, 'BAD_REQUEST', 'Ungültige Suchanfrage'), headers)
   const { shop, query } = parsed
 
   const adapter = deps.adapters?.[shop] ?? DEFAULT_ADAPTERS[shop]
@@ -162,14 +132,18 @@ export async function handleSearch(
         offers: offers.map((o) => toTireOffer(o, query.quantity, config.pricing)),
         error: null,
       },
-      cors,
+      headers,
     )
   } catch (e) {
     if (e instanceof AdapterError) {
       console.warn(`search ${shop}: ${e.code}`)
-      return reply(200, failure(shop, e.code, e.message), cors)
+      return reply(200, failure(shop, e.code, e.message), headers)
     }
     console.error(`search ${shop}: unexpected ${(e as Error)?.name ?? 'error'}`)
-    return reply(200, failure(shop, 'UPSTREAM_ERROR', 'Unerwarteter Fehler beim Shop-Abruf'), cors)
+    return reply(
+      200,
+      failure(shop, 'UPSTREAM_ERROR', 'Unerwarteter Fehler beim Shop-Abruf'),
+      headers,
+    )
   }
 }

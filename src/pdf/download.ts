@@ -1,8 +1,9 @@
 // Builds the offer PDF in the browser and saves it (AC35: no request to the search API).
 // pdf-lib is loaded only on first use to keep the start page small.
+import type { PdfTexts } from '../../supabase/functions/_shared/pdf-texts.ts'
 import { buildOfferModel, offerFileName, type SelectedTyre } from './offer-model.ts'
 
-export async function downloadOfferPdf(items: SelectedTyre[]): Promise<void> {
+export async function downloadOfferPdf(items: SelectedTyre[], texts: PdfTexts): Promise<void> {
   const today = new Date()
   const [{ createOfferPdf }, header] = await Promise.all([
     import('./offer-pdf.ts'),
@@ -11,7 +12,7 @@ export async function downloadOfferPdf(items: SelectedTyre[]): Promise<void> {
       return new Uint8Array(await r.arrayBuffer())
     }),
   ])
-  const bytes = await createOfferPdf(buildOfferModel(items, today), header)
+  const bytes = await createOfferPdf(buildOfferModel(items, today), header, texts)
   const url = URL.createObjectURL(new Blob([new Uint8Array(bytes)], { type: 'application/pdf' }))
   const link = document.createElement('a')
   link.href = url

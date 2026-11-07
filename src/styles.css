@@ -55,13 +55,132 @@ body {
 }
 
 .topbar {
-  padding: 14px 0 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0 6px;
 }
 
 .topbar h1 {
   margin: 0;
   font-size: 1.125rem;
   font-weight: 700;
+}
+
+/* ---------- settings dialog (PDF texts) ---------- */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-sticky) + 10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgb(17 24 39 / 0.45);
+}
+
+.modal__box {
+  display: flex;
+  flex-direction: column;
+  width: min(720px, 100%);
+  max-height: calc(100dvh - 32px);
+  border-radius: 12px;
+  background: var(--bg);
+  box-shadow: 0 20px 50px rgb(17 24 39 / 0.25);
+}
+
+.modal__head {
+  padding: 18px 20px 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.modal__head h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.modal__hint {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.modal__warning {
+  margin: 8px 0 0;
+  padding: 6px 10px;
+  border-radius: var(--radius);
+  background: var(--error-bg);
+  color: var(--error-text);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.modal__body {
+  display: grid;
+  gap: 18px;
+  padding: 16px 20px;
+  overflow-y: auto;
+}
+
+.modal__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--line);
+}
+
+.modal__foot .error {
+  flex-basis: 100%;
+}
+
+.modal__spacer {
+  flex: 1;
+}
+
+.settings-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px 16px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.settings-group legend {
+  margin-bottom: 8px;
+  padding: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.settings-field label {
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.settings-extra {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr) 8rem auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.settings-extra__remove {
+  width: var(--tap);
+  height: var(--tap);
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 1.375rem;
+  cursor: pointer;
+}
+
+.settings-group > .button {
+  justify-self: start;
 }
 
 /* ---------- form ---------- */

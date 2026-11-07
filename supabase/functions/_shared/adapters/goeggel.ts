@@ -125,7 +125,9 @@ async function ajax(
   form: Record<string, string>,
 ): Promise<ResultJson> {
   const res = await session.post(path, form, { xhr: true })
-  if (/idinploginpwd/.test(res.text))
+  // Expired session: either the login form itself or a tiny page that sends the browser there
+  // via JS (`parent.location.href='login.php?m=search'`, seen live 2026-11-07).
+  if (/idinploginpwd/.test(res.text) || /location\.href\s*=\s*["'][^"']*login\.php/i.test(res.text))
     throw new AdapterError('SESSION_EXPIRED', 'Göggel: Sitzung abgelaufen')
   try {
     const json = JSON.parse(res.text) as Partial<ResultJson>

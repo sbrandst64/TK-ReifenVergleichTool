@@ -38,6 +38,10 @@ Stand 2026-11-06, Branch `feat/erster-build`.
 | 16 | Auswahl per Checkbox bleibt über Suchen erhalten, Entfernen/Aufheben; PDF-Knopf fragt die Such-API nicht an (AC31, AC35). RED: ac4490d | `src/App.test.tsx` | component |
 | 17 | Angebots-PDF: leere Kundenfelder, Datum/Dimension/Stück, Zeilen mit LI/SI und Preis, Saison-Häkchen, Gesamtpreis = Summe Stück × Preis, Seitenumbruch ohne Zeilenverlust (AC32–AC34). RED: ac4490d | `src/pdf/offer-model.test.ts`, `src/pdf/offer-pdf.test.ts` | unit |
 | 18 | PDF-Layout gegen Excel-Vorlage (2 und 9 Zeilen), mit der Windows-PDF-Engine als Bild gerendert | manuell | manuell |
+| 19 | PDF-Texte: Einstellungen-Fenster vorbefüllt, Speichern zentral, nächstes PDF nutzt die Texte, Zusatzzeilen hinzufügen/entfernen, Vorlage zurücksetzen, Fehler beim Speichern (AC36–AC39). RED: 41c9d8d | `src/App.test.tsx`, `src/settings-api.test.ts`, `src/pdf/offer-pdf.test.ts` | component |
+| 20 | Dienst `settings`: Vorlage solange leer, 401/400/413/405/500/502, Prüfung der Texte, Supabase-Ablage per PostgREST (AC40) | `test/backend/settings-handler.test.ts`, `pdf-texts.test.ts`, `settings-store-supabase.test.ts` | integration |
+| 21 | Göggel: JS-Weiterleitung auf login.php = SESSION_EXPIRED statt LAYOUT_CHANGED (AC41) | `test/backend/goeggel.test.ts` | unit |
+| 22 | PDF-Texte live: speichern am PC, über WLAN-Adresse mit gleichem Ergebnis gelesen, PDF mit neuen Texten gerendert | manuell | manuell |
 | 14 | Filterbereich farblich abgesetzt, Logos lesbar, Tags springen nicht (AC29, manuell) | Browser bei 375, 768, 1024, 1280 px | manuell |
 
 ## Zusätzlich manuell verifiziert (nicht automatisiert)

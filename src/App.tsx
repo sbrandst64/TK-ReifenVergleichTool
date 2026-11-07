@@ -1,7 +1,8 @@
 // Searches both shops in parallel; each shop's result appears as soon as it arrives (AC4).
 // Phone/tablet: after a search the form folds into a one-line summary so results are on screen.
 // Wide screens: the form stays visible in a side column (CSS decides, see styles.css).
-import { useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { DEFAULT_PDF_TEXTS, type PdfTexts } from '../supabase/functions/_shared/pdf-texts.ts'
 import { groupOffers } from '../supabase/functions/_shared/matching.ts'
 import {
   SHOPS,
@@ -9,11 +10,18 @@ import {
   type ShopId,
   type TireOffer,
 } from '../supabase/functions/_shared/types.ts'
-import { defaultSearch, UnauthorizedError, type SearchFn } from './api.ts'
+import {
+  defaultSearch,
+  defaultSettings,
+  UnauthorizedError,
+  type SearchFn,
+  type SettingsApi,
+} from './api.ts'
 import { CodePrompt } from './components/CodePrompt.tsx'
 import { offerKey, ResultList } from './components/ResultList.tsx'
 import { SearchForm } from './components/SearchForm.tsx'
 import { SelectionBar } from './components/SelectionBar.tsx'
+import { SettingsDialog } from './components/SettingsDialog.tsx'
 import { errorMessage, SHOP_LABEL } from './messages.ts'
 import { SEASON_OPTIONS } from './options.ts'
 import { downloadOfferPdf } from './pdf/download.ts'
@@ -22,7 +30,9 @@ import type { SelectedTyre } from './pdf/offer-model.ts'
 export interface AppProps {
   search?: SearchFn
   /** Builds and saves the offer PDF from the selection (replaced in tests). */
-  makeOfferPdf?: (items: SelectedTyre[]) => Promise<void>
+  makeOfferPdf?: (items: SelectedTyre[], texts: PdfTexts) => Promise<void>
+  /** Central PDF texts (replaced in tests). */
+  settings?: SettingsApi
 }
 
 type ShopState =
@@ -79,7 +89,16 @@ function summaryText(q: SearchQuery, shops: ShopId[]): string {
   ].join(' · ')
 }
 
-export function App({ search = defaultSearch, makeOfferPdf = downloadOfferPdf }: AppProps) {
+export function App({
+  search = defaultSearch,
+  makeOfferPdf = downloadOfferPdf,
+  settings = defaultSettings,
+}: AppProps) {
+  // PDF texts: template until the central ones arrive (AC37); dialog via "Einstellungen" (AC36).
+  const [pdfTexts, setPdfTexts] = useState<PdfTexts>(DEFAULT_PDF_TEXTS)
+  const [textsWarning, setTextsWarning] = useState<string | null>(null)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const closeSettings = useCallback(() => setSettingsOpen(false), [])
   // Ticked tyres in tick order; kept across searches, only in memory (AC31).
   const [selection, setSelection] = useState<SelectedTyre[]>([])
   const selectedKeys = useMemo(() => new Set(selection.map((s) => offerKey(s.offer))), [selection])
@@ -100,6 +119,32 @@ export function App({ search = defaultSearch, makeOfferPdf = downloadOfferPdf }:
       ),
     [shops],
   )
+
+  useEffect(() => {
+    if (!code) return
+    let current = true
+    settings
+      .load(code)
+      .then((texts) => {
+        if (!current) return
+        setPdfTexts(texts)
+        setTextsWarning(null)
+      })
+      .catch(() => {
+        if (current)
+          setTextsWarning('Gespeicherte Texte konnten nicht geladen werden – es gilt die Vorlage.')
+      })
+    return () => {
+      current = false
+    }
+  }, [code, settings])
+
+  const saveTexts = async (texts: PdfTexts) => {
+    const stored = await settings.save(code, texts)
+    setPdfTexts(stored)
+    setTextsWarning(null)
+    setSettingsOpen(false)
+  }
 
   const toggle = (offer: TireOffer) => {
     const key = offerKey(offer)
@@ -161,7 +206,24 @@ export function App({ search = defaultSearch, makeOfferPdf = downloadOfferPdf }:
     <main className={selection.length > 0 ? 'app app--selection' : 'app'}>
       <header className="topbar">
         <h1>Reifen-Preisvergleich</h1>
+        {code && (
+          <button
+            type="button"
+            className="button topbar__settings"
+            onClick={() => setSettingsOpen(true)}
+          >
+            <span aria-hidden="true">⚙ </span>Einstellungen
+          </button>
+        )}
       </header>
+      {settingsOpen && (
+        <SettingsDialog
+          texts={pdfTexts}
+          warning={textsWarning}
+          onSave={saveTexts}
+          onClose={closeSettings}
+        />
+      )}
       {!code ? (
         <CodePrompt error={codeError} onSave={saveCode} />
       ) : (
@@ -201,7 +263,7 @@ export function App({ search = defaultSearch, makeOfferPdf = downloadOfferPdf }:
             items={selection}
             onRemove={(item) => toggle(item.offer)}
             onClear={() => setSelection([])}
-            onOfferPdf={() => makeOfferPdf(selection)}
+            onOfferPdf={() => makeOfferPdf(selection, pdfTexts)}
           />
         </div>
       )}

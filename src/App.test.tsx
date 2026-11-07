@@ -414,7 +414,7 @@ describe('App', () => {
       await user.type(within(dialog).getByLabelText('Zusatz 6 Preis'), '€ 80,-')
       await user.click(within(dialog).getByRole('button', { name: 'Zusatz 1 entfernen' }))
       await user.click(within(dialog).getByRole('button', { name: 'Speichern' }))
-      const saved = settings.save.mock.calls[0][1]
+      const saved = vi.mocked(settings.save).mock.calls[0][1]
       expect(saved.extras).toHaveLength(5)
       expect(saved.extras[0].text).toBe('Räder umstecken SUV/LLKW/ab 18":')
       expect(saved.extras[4]).toEqual({ text: 'Felgen lackieren', price: '€ 80,-' })
