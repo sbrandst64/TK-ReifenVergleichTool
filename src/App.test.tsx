@@ -255,4 +255,78 @@ describe('App', () => {
     await Promise.resolve()
     expect(screen.queryByText(/ALT/)).toBeNull()
   })
+
+  describe('selection and offer PDF', () => {
+    const pirelli = offer({ brand: 'PIRELLI', profile: 'W Sotozero 3', ean: '1' })
+    const hankook = offer({ shop: 'weichberger', brand: 'HANKOOK', profile: 'IW 01', ean: '2' })
+
+    async function setup() {
+      localStorage.setItem('werkstatt-code', 'abc')
+      let round = 0
+      const search = vi.fn<SearchFn>(async (shop) => {
+        if (shop === 'goeggel') round++
+        if (round === 1) return ok(shop, shop === 'goeggel' ? [pirelli] : [])
+        return ok(shop, shop === 'weichberger' ? [hankook] : [])
+      })
+      const makeOfferPdf = vi.fn(async () => {})
+      const user = userEvent.setup()
+      render(<App search={search} makeOfferPdf={makeOfferPdf} />)
+      await user.click(
+        within(screen.getByRole('group', { name: 'Stückzahl' })).getByRole('button', { name: '2' }),
+      )
+      await user.click(screen.getByRole('button', { name: 'Suchen' }))
+      return { user, search, makeOfferPdf }
+    }
+
+    const bar = () => screen.getByRole('region', { name: 'Auswahl' })
+
+    it('AC31: a tick keeps the tyre with its quantity, also after the next search', async () => {
+      const { user } = await setup()
+      expect(screen.queryByRole('region', { name: 'Auswahl' })).toBeNull()
+      await user.click(
+        await screen.findByRole('checkbox', { name: 'PIRELLI W Sotozero 3 (Göggel) auswählen' }),
+      )
+      expect(bar()).toHaveTextContent('1 Reifen ausgewählt')
+
+      await user.click(screen.getByRole('button', { name: 'Ändern' }))
+      await user.click(
+        within(screen.getByRole('group', { name: 'Stückzahl' })).getByRole('button', { name: '4' }),
+      )
+      await user.click(screen.getByRole('button', { name: 'Suchen' }))
+      await user.click(
+        await screen.findByRole('checkbox', { name: 'HANKOOK IW 01 (Weichberger) auswählen' }),
+      )
+      expect(bar()).toHaveTextContent('2 Reifen ausgewählt')
+      expect(within(bar()).getByText(/PIRELLI W Sotozero 3/)).toHaveTextContent('2 Stk')
+      expect(within(bar()).getByText(/HANKOOK IW 01/)).toHaveTextContent('4 Stk')
+    })
+
+    it('AC31: single remove and "Auswahl aufheben"', async () => {
+      const { user } = await setup()
+      const box = await screen.findByRole('checkbox', {
+        name: 'PIRELLI W Sotozero 3 (Göggel) auswählen',
+      })
+      await user.click(box)
+      await user.click(
+        within(bar()).getByRole('button', { name: 'PIRELLI W Sotozero 3 entfernen' }),
+      )
+      expect(box).not.toBeChecked()
+      expect(screen.queryByRole('region', { name: 'Auswahl' })).toBeNull()
+
+      await user.click(box)
+      await user.click(within(bar()).getByRole('button', { name: 'Auswahl aufheben' }))
+      expect(box).not.toBeChecked()
+    })
+
+    it('AC35: "Angebot als PDF" hands the selection over without asking the search API', async () => {
+      const { user, search, makeOfferPdf } = await setup()
+      await user.click(
+        await screen.findByRole('checkbox', { name: 'PIRELLI W Sotozero 3 (Göggel) auswählen' }),
+      )
+      const calls = search.mock.calls.length
+      await user.click(within(bar()).getByRole('button', { name: 'Angebot als PDF' }))
+      expect(makeOfferPdf).toHaveBeenCalledWith([{ offer: pirelli, quantity: 2 }])
+      expect(search.mock.calls.length).toBe(calls)
+    })
+  })
 })

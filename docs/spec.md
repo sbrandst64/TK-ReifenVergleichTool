@@ -108,7 +108,7 @@ aufgeführt und gelten, solange niemand widerspricht.
 - Gibt es keine Treffer, zeigt die UI „Keine lagernden Reifen in dieser Größe“ pro Shop.
 
 ### 3.4 Auswahl und Warenkorb (Phase 3)
-- Angebote lassen sich mit Stückzahl (+/−) auswählen. Die Auswahl ist pro Shop gruppiert.
+- Angebote lassen sich per Checkbox auswählen (siehe 3.7). Die Auswahl ist pro Shop gruppiert.
 - Ein Klick „In den Warenkorb legen“ legt die ausgewählten Positionen in den Warenkorb des
   jeweiligen Shops. Die UI zeigt je Position Erfolg oder einen Fehler.
 - **Gate:** Phase 3 startet erst nach einem Spike, der belegt, dass der Warenkorb am Account
@@ -141,9 +141,33 @@ aufgeführt und gelten, solange niemand widerspricht.
 - **Fixtures und Testdaten** sind anonymisiert bzw. synthetisch: keine Kundennummern, Session-IDs,
   Namen oder echten EK. Das Repo kann öffentlich sein (GitHub Pages).
 
+### 3.7 Auswahl und Angebots-PDF (Phase 5, Wunsch 2026-11-06)
+- **Auswahl:** Jede Angebotszeile hat eine Checkbox. Ein gewählter Reifen merkt sich die Stückzahl
+  der Suche, in der er angehakt wurde (nicht änderbar). Die Auswahl bleibt über weitere Suchen
+  erhalten (z. B. Mischbereifung vorne/hinten), lebt aber nur im offenen Fenster (kein Speichern,
+  damit keine alten Preise liegen bleiben). Eine Leiste zeigt die Auswahl, lässt einzelne Reifen
+  entfernen und bietet „Angebot als PDF“ und „Auswahl aufheben“.
+- **Angebots-PDF** nach der Excel-Vorlage der Werkstatt („Reifen Angebot_email_2026.xlsx“, Stand Excel,
+  ohne Termin und Storno-Hinweis). Es heißt „Reifen-Angebot“ und ist keine Rechnung.
+  - Kopfbild der Werkstatt aus der Vorlage, Titel „REIFEN - ANGEBOT“.
+  - Kunde, E-Mail, Tel:Nr sind leere, im PDF ausfüllbare Textfelder.
+  - Datum (heute, TT.MM.JJJJ) und Dimension (alle gewählten Größen, durch Komma getrennt) sowie
+    Stück (Summe aller Zeilen) werden automatisch ausgefüllt.
+  - Sommer / Winter / Ganzjahres sind Kästchen, angehakt nach den Saisonen der gewählten Reifen.
+  - Je gewähltem Reifen eine Zeile: „Marke Profil“ in Shop-Schreibweise, Dimension mit LI/SI, Stück,
+    VK-Preis/Stück = Endkundenpreis aus der App (deckt Montage, Wuchten, Entsorgung ab). Mehr als
+    6 Zeilen → die Liste läuft auf weitere Seiten weiter.
+  - **Gesamtpreis** = Summe aller Zeilen (Stück × VK-Preis/Stück).
+  - Darunter nur zur Information, **nicht** im Gesamtpreis: „zusätzlich“ Räder umstecken PKW bis 17"
+    € 34,-; SUV/LLKW/ab 18" € 36,-; einlagern € 32,-; waschen (maschinell) € 15,-; TPMS Diagnose
+    € 15,- sowie „*Angebot nur an diesem Tag gültig, da Preisschwankungen bestehen“.
+  - Alle vorbefüllten Werte sind ebenfalls Formularfelder und im PDF änderbar. Der Gesamtpreis
+    rechnet sich dabei nicht neu.
+  - Das PDF entsteht im Browser. Kundendaten werden nicht an einen Server geschickt.
+
 ## 4. Non-Goals
 
-1. Angebots-PDF (kommt später).
+1. Rechnungen (Rechnungsnummer, UID usw.). Das PDF ist ein Angebot.
 2. Bestellen oder Checkout, in keiner Form, auch nicht teilautomatisiert.
 3. KI/LLM zur Laufzeit: Selektoren, Requests und Matching sind fest programmiert.
 4. Kein Preis-Crawler, keine Preis-Historie, kein Vorab-Cache von Suchergebnissen.
@@ -231,6 +255,19 @@ In Klammern steht die Phase. „Fixture-Daten“ heißt: anonymisierte, aufgezei
 - AC30 (P2) – Jedes Angebot trägt genau einen Verfügbarkeits-Tag: „Lagernd“ (grün), wenn die
   Stückzahl sofort verfügbar ist; „2–3 Tage“ (gelb), wenn sie nur mit dem Nebenlager reicht;
   „Nicht lagernd“ (rot) bei Bestand 0.
+
+**Auswahl und Angebots-PDF (3.7)**
+- AC31 (P5) – Ein Haken an einer Angebotszeile nimmt den Reifen mit der Stückzahl seiner Suche in die
+  Auswahl. Nach einer neuen Suche ist er weiter ausgewählt. „Auswahl aufheben“ leert sie, ein
+  Entfernen-Knopf nimmt einen einzelnen Reifen heraus.
+- AC32 (P5) – Im PDF sind Kunde, E-Mail und Tel:Nr leere Textfelder; Datum ist das heutige Datum;
+  Dimension nennt jede gewählte Größe genau einmal; Stück ist die Summe aller Zeilen.
+- AC33 (P5) – Das PDF hat je gewähltem Reifen eine Zeile mit Bezeichnung, Dimension mit LI/SI, Stück
+  und VK-Preis/Stück in der Reihenfolge der Auswahl. Bei mehr als 6 Zeilen hat es mehrere Seiten,
+  und keine Zeile fehlt. Die Saison-Kästchen der gewählten Reifen sind angehakt, die anderen nicht.
+- AC34 (P5) – Der Gesamtpreis ist die Summe aus Stück × VK-Preis/Stück aller Zeilen. Die Zusatzpreise
+  (umstecken, einlagern, waschen, TPMS) gehen nicht ein.
+- AC35 (P5) – Beim Erstellen des PDFs geht keine Anfrage an die Such-API.
 
 ## 6. Architektur (Kurzfassung)
 
