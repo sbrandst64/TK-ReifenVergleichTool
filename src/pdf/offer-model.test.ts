@@ -28,7 +28,7 @@ const rear = tyre({
 })
 
 describe('buildOfferModel', () => {
-  it('AC32: date of today, every size once, pieces = sum of all lines', () => {
+  it('AC32: date of today, every size once, pieces = quantity of the lines (alternatives, no sum)', () => {
     const m = buildOfferModel(
       [
         { offer: front, quantity: 2 },
@@ -39,7 +39,19 @@ describe('buildOfferModel', () => {
     )
     expect(m.date).toBe('07.11.2026')
     expect(m.dimension).toBe('245/45 R19, 275/40 R19')
-    expect(m.pieces).toBe(6)
+    expect(m.pieces).toBe('2')
+  })
+
+  it('AC32: different quantities (e.g. front 2, rear 4) are each named once', () => {
+    const m = buildOfferModel(
+      [
+        { offer: front, quantity: 2 },
+        { offer: rear, quantity: 4 },
+        { offer: tyre(), quantity: 2 },
+      ],
+      today,
+    )
+    expect(m.pieces).toBe('2, 4')
   })
 
   it('AC33: one line per tyre in selection order with label, size incl. LI/SI, pieces, unit price', () => {
@@ -68,7 +80,12 @@ describe('buildOfferModel', () => {
     expect(m.seasons).toEqual({ sommer: false, winter: true, ganzjahr: true })
   })
 
-  it('AC34: total = sum of pieces × unit price over all lines', () => {
+  it('AC34: one tyre → total = pieces × unit price', () => {
+    const m = buildOfferModel([{ offer: front, quantity: 2 }], today)
+    expect(m.total).toBe('487,40')
+  })
+
+  it('AC34: several tyres are alternatives for the customer → no total over all lines', () => {
     const m = buildOfferModel(
       [
         { offer: front, quantity: 2 },
@@ -76,8 +93,7 @@ describe('buildOfferModel', () => {
       ],
       today,
     )
-    expect(m.totalCents).toBe(2 * 24370 + 2 * 27410)
-    expect(m.total).toBe('1.035,60')
+    expect(m.total).toBe('')
   })
 })
 

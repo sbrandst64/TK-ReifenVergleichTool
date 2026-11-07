@@ -142,8 +142,9 @@ aufgeführt und gelten, solange niemand widerspricht.
   Namen oder echten EK. Das Repo kann öffentlich sein (GitHub Pages).
 
 ### 3.7 Auswahl und Angebots-PDF (Phase 5, Wunsch 2026-11-06)
-- **Auswahl:** Jede Angebotszeile hat eine Checkbox. Ein gewählter Reifen merkt sich die Stückzahl
-  der Suche, in der er angehakt wurde (nicht änderbar). Die Auswahl bleibt über weitere Suchen
+- **Auswahl:** Jede Angebotszeile hat eine Checkbox. Ein gewählter Reifen merkt sich die Stückzahl,
+  die beim Anhaken im Filter markiert ist – auch ohne neue Suche (Wunsch 2026-11-07). Spätere
+  Filter-Änderungen ändern bereits gewählte Reifen nicht. Die Auswahl bleibt über weitere Suchen
   erhalten (z. B. Mischbereifung vorne/hinten), lebt aber nur im offenen Fenster (kein Speichern,
   damit keine alten Preise liegen bleiben). Die Liste der Auswahl steht im linken Bereich unter dem
   Suchknopf, lässt einzelne Reifen entfernen und bietet „Auswahl aufheben“. „Angebot als PDF“
@@ -153,12 +154,14 @@ aufgeführt und gelten, solange niemand widerspricht.
   - Kopfbild der Werkstatt aus der Vorlage, Titel „REIFEN - ANGEBOT“.
   - Kunde, E-Mail, Tel:Nr sind leere, im PDF ausfüllbare Textfelder.
   - Datum (heute, TT.MM.JJJJ) und Dimension (alle gewählten Größen, durch Komma getrennt) sowie
-    Stück (Summe aller Zeilen) werden automatisch ausgefüllt.
+    Stück (die Stückzahl der Zeilen, jede Zahl einmal, z. B. „2“ oder „2, 4“ – keine Summe)
+    werden automatisch ausgefüllt.
   - Sommer / Winter / Ganzjahres sind Kästchen, angehakt nach den Saisonen der gewählten Reifen.
   - Je gewähltem Reifen eine Zeile: „Marke Profil“ in Shop-Schreibweise, Dimension mit LI/SI, Stück,
     VK-Preis/Stück = Endkundenpreis aus der App (deckt Montage, Wuchten, Entsorgung ab). Mehr als
     6 Zeilen → die Liste läuft auf weitere Seiten weiter.
-  - **Gesamtpreis** = Summe aller Zeilen (Stück × VK-Preis/Stück).
+  - Die Zeilen sind **Alternativen** für den Kunden (Wunsch 2026-11-07). **Gesamtpreis** nur bei
+    genau einem Reifen (Stück × VK-Preis/Stück); bei mehreren bleibt das Feld leer und ausfüllbar.
   - Darunter nur zur Information, **nicht** im Gesamtpreis: „zusätzlich“ Räder umstecken PKW bis 17"
     € 34,-; SUV/LLKW/ab 18" € 36,-; einlagern € 32,-; waschen (maschinell) € 15,-; TPMS Diagnose
     € 15,- sowie „*Angebot nur an diesem Tag gültig, da Preisschwankungen bestehen“.
@@ -269,17 +272,19 @@ In Klammern steht die Phase. „Fixture-Daten“ heißt: anonymisierte, aufgezei
   „Nicht lagernd“ (rot) bei Bestand 0.
 
 **Auswahl und Angebots-PDF (3.7)**
-- AC31 (P5) – Ein Haken an einer Angebotszeile nimmt den Reifen mit der Stückzahl seiner Suche in die
-  Auswahl. Nach einer neuen Suche ist er weiter ausgewählt. „Auswahl aufheben“ leert sie, ein
+- AC31 (P5) – Ein Haken an einer Angebotszeile nimmt den Reifen mit der gerade im Filter markierten
+  Stückzahl in die Auswahl (auch ohne neue Suche); spätere Filter-Änderungen ändern ihn nicht. Nach einer neuen Suche ist er weiter ausgewählt. „Auswahl aufheben“ leert sie, ein
   Entfernen-Knopf nimmt einen einzelnen Reifen heraus. Liste und „Auswahl aufheben“ stehen im
   linken Bereich unter „Suchen“; „Angebot als PDF“ steht außerhalb davon unten rechts.
 - AC32 (P5) – Im PDF sind Kunde, E-Mail und Tel:Nr leere Textfelder; Datum ist das heutige Datum;
-  Dimension nennt jede gewählte Größe genau einmal; Stück ist die Summe aller Zeilen.
+  Dimension nennt jede gewählte Größe genau einmal; Stück nennt jede Stückzahl der Zeilen genau
+  einmal (keine Summe).
 - AC33 (P5) – Das PDF hat je gewähltem Reifen eine Zeile mit Bezeichnung, Dimension mit LI/SI, Stück
   und VK-Preis/Stück in der Reihenfolge der Auswahl. Bei mehr als 6 Zeilen hat es mehrere Seiten,
   und keine Zeile fehlt. Die Saison-Kästchen der gewählten Reifen sind angehakt, die anderen nicht.
-- AC34 (P5) – Der Gesamtpreis ist die Summe aus Stück × VK-Preis/Stück aller Zeilen. Die Zusatzpreise
-  (umstecken, einlagern, waschen, TPMS) gehen nicht ein.
+- AC34 (P5) – Bei genau einem Reifen ist der Gesamtpreis Stück × VK-Preis/Stück; bei mehreren
+  (Alternativen) ist das Feld leer und ausfüllbar. Die Zusatzpreise (umstecken, einlagern, waschen,
+  TPMS) gehen nie ein.
 - AC35 (P5) – Beim Erstellen des PDFs geht keine Anfrage an die Such-API, und keine Anfrage enthält
   Kundendaten.
 - AC36 (P5) – „Einstellungen“ rechts oben öffnet ein Fenster mit allen PDF-Texten, vorbefüllt mit

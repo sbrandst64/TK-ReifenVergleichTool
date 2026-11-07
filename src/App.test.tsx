@@ -340,6 +340,23 @@ describe('App', () => {
       expect(within(bar()).getByText(/HANKOOK IW 01/)).toHaveTextContent('4 Stk')
     })
 
+    it('AC31: a tick takes the quantity marked in the filter right now, even without a new search', async () => {
+      const { user } = await setup()
+      const quantity = (n: string) =>
+        within(screen.getByRole('group', { name: 'Stückzahl' })).getByRole('button', { name: n })
+      await screen.findByRole('checkbox', { name: 'PIRELLI W Sotozero 3 (Göggel) auswählen' })
+      await user.click(screen.getByRole('button', { name: 'Ändern' }))
+      await user.click(quantity('6'))
+      await user.click(
+        screen.getByRole('checkbox', { name: 'PIRELLI W Sotozero 3 (Göggel) auswählen' }),
+      )
+      expect(within(bar()).getByText(/PIRELLI W Sotozero 3/)).toHaveTextContent('6 Stk')
+
+      // changing the filter later leaves tyres already chosen as they are
+      await user.click(quantity('8'))
+      expect(within(bar()).getByText(/PIRELLI W Sotozero 3/)).toHaveTextContent('6 Stk')
+    })
+
     it('AC31: single remove and "Auswahl aufheben"', async () => {
       const { user } = await setup()
       const box = await screen.findByRole('checkbox', {

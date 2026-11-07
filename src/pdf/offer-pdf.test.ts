@@ -41,10 +41,10 @@ describe('createOfferPdf', () => {
     }
     expect(form.getTextField('datum').getText()).toBe('07.11.2026')
     expect(form.getTextField('dimension').getText()).toBe('205/55 R16')
-    expect(form.getTextField('stueck').getText()).toBe('8')
+    expect(form.getTextField('stueck').getText()).toBe('4')
   })
 
-  it('AC33/AC34: one editable row per tyre, season boxes and the total', async () => {
+  it('AC33/AC34: one editable row per tyre, season boxes; total left empty but fillable for alternatives', async () => {
     const form = (await render(2)).getForm()
     expect(form.getTextField('zeile1_reifen').getText()).toBe('Testmarke P1')
     expect(form.getTextField('zeile1_dimension').getText()).toBe('205/55 R16 91H')
@@ -54,7 +54,12 @@ describe('createOfferPdf', () => {
     expect(form.getCheckBox('saison_winter').isChecked()).toBe(true)
     expect(form.getCheckBox('saison_sommer').isChecked()).toBe(false)
     expect(form.getCheckBox('saison_ganzjahr').isChecked()).toBe(false)
-    expect(form.getTextField('gesamtpreis').getText()).toBe('800,04')
+    expect(form.getTextField('gesamtpreis').getText() ?? '').toBe('')
+    expect(form.getTextField('gesamtpreis').isReadOnly()).toBe(false)
+  })
+
+  it('AC34: a single tyre gets its total', async () => {
+    expect((await render(1)).getForm().getTextField('gesamtpreis').getText()).toBe('400,00')
   })
 
   it('draws the template texts by default', async () => {
@@ -76,7 +81,7 @@ describe('createOfferPdf', () => {
     expect(page).toContain(hex('Firma:'))
     expect(page).toContain(hex('Felgen lackieren'))
     expect(page).not.toContain(hex('Räder einlagern:'))
-    expect(doc.getForm().getTextField('gesamtpreis').getText()).toBe('800,04')
+    expect(doc.getForm().getTextField('gesamtpreis').getText() ?? '').toBe('')
   })
 
   it('copes with very long and non-Latin texts (shrinks, never throws)', async () => {
