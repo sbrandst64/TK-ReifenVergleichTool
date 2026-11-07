@@ -44,6 +44,7 @@ Stand 2026-11-06, Branch `feat/erster-build`.
 | 22 | PDF-Texte live: speichern am PC, über WLAN-Adresse mit gleichem Ergebnis gelesen, PDF mit neuen Texten gerendert | manuell | manuell |
 | 23 | Ladekreis statt Punkte pro Shop beim Laden. RED: 7009a4c | `src/App.test.tsx` | component |
 | 24 | Auswahl-Liste und „Auswahl aufheben“ links unter „Suchen“, „Angebot als PDF“ schwebt außerhalb unten rechts (AC31). RED: 1181656 | `src/App.test.tsx` | component |
+| 25 | Haken übernimmt die gerade im Filter markierte Stückzahl (ohne neue Suche), spätere Änderungen lassen Gewähltes unverändert; PDF: Zeilen sind Alternativen – „Stück“ nennt jede Zahl einmal, Gesamtpreis nur bei genau einem Reifen, sonst leeres ausfüllbares Feld (AC31, AC32, AC34). RED: 4f45401 | `src/App.test.tsx`, `src/pdf/offer-model.test.ts`, `src/pdf/offer-pdf.test.ts` | component/unit |
 | 14 | Filterbereich farblich abgesetzt, Logos lesbar, Tags springen nicht (AC29, manuell) | Browser bei 375, 768, 1024, 1280 px | manuell |
 
 ## Zusätzlich manuell verifiziert (nicht automatisiert)

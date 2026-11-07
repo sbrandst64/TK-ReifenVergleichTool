@@ -46,8 +46,11 @@ function SizeSelect(props: {
 
 export function SearchForm({
   onSearch,
+  onQuantityChange,
 }: {
   onSearch: (query: SearchQuery, shops: ShopId[]) => void
+  /** Tells the app the marked quantity at once, so a tick uses it without a new search (AC31). */
+  onQuantityChange?: (quantity: number) => void
 }) {
   const [provider, setProvider] = useState('beide')
   const [width, setWidth] = useState(DEFAULTS.width)
@@ -91,7 +94,10 @@ export function SearchForm({
         className="tag-group--even"
         options={QUANTITIES.map((q) => ({ value: String(q), label: String(q) }))}
         selected={[String(quantity)]}
-        onChange={([v]) => setQuantity(Number(v))}
+        onChange={([v]) => {
+          setQuantity(Number(v))
+          onQuantityChange?.(Number(v))
+        }}
       />
       <TagGroup
         label="Saison"

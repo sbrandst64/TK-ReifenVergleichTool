@@ -144,7 +144,7 @@ function drawHead(page: PDFPage, ctx: Ctx, model: OfferModel, header: PDFImage) 
     page,
     ctx,
     'stueck',
-    String(model.pieces),
+    model.pieces,
     { x: 455, y: 501, width: 60 },
     {
       align: TextAlignment.Center,
@@ -260,6 +260,8 @@ function drawFooter(page: PDFPage, ctx: Ctx, model: OfferModel) {
       size: 13,
       bold: true,
       align: TextAlignment.Right,
+      // several tyres are alternatives: empty, highlighted field for the price the customer picks
+      hint: model.total === '',
     },
   )
 }

@@ -23,7 +23,7 @@ import { SearchForm } from './components/SearchForm.tsx'
 import { SelectionActions, SelectionList } from './components/Selection.tsx'
 import { SettingsDialog } from './components/SettingsDialog.tsx'
 import { errorMessage, SHOP_LABEL } from './messages.ts'
-import { SEASON_OPTIONS } from './options.ts'
+import { DEFAULTS, SEASON_OPTIONS } from './options.ts'
 import { downloadOfferPdf } from './pdf/download.ts'
 import type { SelectedTyre } from './pdf/offer-model.ts'
 
@@ -101,6 +101,8 @@ export function App({
   const closeSettings = useCallback(() => setSettingsOpen(false), [])
   // Ticked tyres in tick order; kept across searches, only in memory (AC31).
   const [selection, setSelection] = useState<SelectedTyre[]>([])
+  // Quantity marked in the filter right now; a tick takes it, even without a new search (AC31).
+  const [filterQuantity, setFilterQuantity] = useState(DEFAULTS.quantity)
   const selectedKeys = useMemo(() => new Set(selection.map((s) => offerKey(s.offer))), [selection])
   const [code, setCode] = useState(readCode)
   const [codeError, setCodeError] = useState<string | null>(null)
@@ -151,7 +153,7 @@ export function App({
     setSelection((prev) =>
       prev.some((s) => offerKey(s.offer) === key)
         ? prev.filter((s) => offerKey(s.offer) !== key)
-        : [...prev, { offer, quantity: lastSearch?.query.quantity ?? 1 }],
+        : [...prev, { offer, quantity: filterQuantity }],
     )
   }
 
@@ -239,7 +241,7 @@ export function App({
                 </button>
               </div>
             )}
-            <SearchForm onSearch={runSearch} />
+            <SearchForm onSearch={runSearch} onQuantityChange={setFilterQuantity} />
             <SelectionList
               items={selection}
               onRemove={(item) => toggle(item.offer)}

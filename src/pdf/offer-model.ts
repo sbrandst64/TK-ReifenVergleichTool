@@ -4,7 +4,7 @@ import type { Season, TireOffer } from '../../supabase/functions/_shared/types.t
 
 export interface SelectedTyre {
   offer: TireOffer
-  /** Quantity of the search in which the tyre was ticked (AC31). */
+  /** Quantity marked in the filter when the tyre was ticked (AC31). */
   quantity: number
 }
 
@@ -18,10 +18,11 @@ export interface OfferLine {
 export interface OfferModel {
   date: string
   dimension: string
-  pieces: number
+  /** Every quantity of the lines once, e.g. "2" or "2, 4" – the lines are alternatives, no sum. */
+  pieces: string
   seasons: Record<Season, boolean>
   lines: OfferLine[]
-  totalCents: number
+  /** Only for a single tyre; with several (alternatives for the customer) it stays empty (AC34). */
   total: string
 }
 
@@ -37,13 +38,13 @@ export function formatAmount(cents: number): string {
 const sizeOf = (o: TireOffer) => `${o.width}/${o.height} R${o.rim}`
 
 export function buildOfferModel(items: SelectedTyre[], today: Date): OfferModel {
-  const totalCents = items.reduce((sum, i) => sum + i.quantity * i.offer.priceGrossCents, 0)
+  const only = items.length === 1 ? items[0] : null
   const seasons: Record<Season, boolean> = { sommer: false, winter: false, ganzjahr: false }
   for (const { offer } of items) if (offer.season) seasons[offer.season] = true
   return {
     date: `${two(today.getDate())}.${two(today.getMonth() + 1)}.${today.getFullYear()}`,
     dimension: [...new Set(items.map((i) => sizeOf(i.offer)))].join(', '),
-    pieces: items.reduce((sum, i) => sum + i.quantity, 0),
+    pieces: [...new Set(items.map((i) => i.quantity))].join(', '),
     seasons,
     lines: items.map(({ offer, quantity }) => ({
       label: `${offer.brand} ${offer.profile}`.trim(),
@@ -51,8 +52,7 @@ export function buildOfferModel(items: SelectedTyre[], today: Date): OfferModel 
       quantity,
       unitPrice: formatAmount(offer.priceGrossCents),
     })),
-    totalCents,
-    total: formatAmount(totalCents),
+    total: only ? formatAmount(only.quantity * only.offer.priceGrossCents) : '',
   }
 }
 
