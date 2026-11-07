@@ -33,7 +33,15 @@ function ShopBadge({ shop }: { shop: ShopId }) {
   )
 }
 
-function TyreGroup({ group }: { group: OfferGroup }) {
+export const offerKey = (o: TireOffer) => `${o.shop}-${o.shopArticleId}`
+
+interface Selectable {
+  /** Keys (offerKey) of the ticked offers. */
+  selected?: ReadonlySet<string>
+  onToggle?: (offer: TireOffer) => void
+}
+
+function TyreGroup({ group, selected, onToggle }: { group: OfferGroup } & Selectable) {
   const first = group.offers[0]
   const compare = group.offers.length > 1
   const season = seasonLabel(group.offers.find((o) => o.season)?.season ?? null)
@@ -50,12 +58,28 @@ function TyreGroup({ group }: { group: OfferGroup }) {
       <ul className="offers">
         {group.offers.map((o) => {
           const best = compare && o.cheapest
+          const ticked = selected?.has(offerKey(o)) ?? false
           return (
             <li
-              key={`${o.shop}-${o.shopArticleId}`}
-              className={best ? 'offer offer--best' : 'offer'}
+              key={offerKey(o)}
+              className={['offer', best && 'offer--best', ticked && 'offer--selected']
+                .filter(Boolean)
+                .join(' ')}
               data-delayed={String(o.delayed)}
             >
+              {onToggle && (
+                <label className="offer__select">
+                  <input
+                    type="checkbox"
+                    checked={ticked}
+                    aria-label={`${o.brand} ${o.profile} (${SHOP_LABEL[o.shop]}) auswählen`}
+                    onChange={() => {
+                      const { cheapest: _cheapest, ...offer } = o
+                      onToggle(offer)
+                    }}
+                  />
+                </label>
+              )}
               <span className="offer__who">
                 <ShopBadge shop={o.shop} />
                 {best && (
@@ -87,12 +111,12 @@ function TyreGroup({ group }: { group: OfferGroup }) {
   )
 }
 
-export function ResultList({ groups }: { groups: OfferGroup[] }) {
+export function ResultList({ groups, selected, onToggle }: { groups: OfferGroup[] } & Selectable) {
   if (groups.length === 0) return null
   return (
     <div className="results">
       {groups.map((g) => (
-        <TyreGroup key={g.id} group={g} />
+        <TyreGroup key={g.id} group={g} selected={selected} onToggle={onToggle} />
       ))}
     </div>
   )

@@ -262,10 +262,9 @@ describe('App', () => {
 
     async function setup() {
       localStorage.setItem('werkstatt-code', 'abc')
-      let round = 0
-      const search = vi.fn<SearchFn>(async (shop) => {
-        if (shop === 'goeggel') round++
-        if (round === 1) return ok(shop, shop === 'goeggel' ? [pirelli] : [])
+      // first search with 2 pieces finds Pirelli at Göggel, the next one (4 pieces) Hankook at Weichberger
+      const search = vi.fn<SearchFn>(async (shop, query) => {
+        if (query.quantity === 2) return ok(shop, shop === 'goeggel' ? [pirelli] : [])
         return ok(shop, shop === 'weichberger' ? [hankook] : [])
       })
       const makeOfferPdf = vi.fn(async () => {})

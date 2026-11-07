@@ -11,13 +11,18 @@ import {
 } from '../supabase/functions/_shared/types.ts'
 import { defaultSearch, UnauthorizedError, type SearchFn } from './api.ts'
 import { CodePrompt } from './components/CodePrompt.tsx'
-import { ResultList } from './components/ResultList.tsx'
+import { offerKey, ResultList } from './components/ResultList.tsx'
 import { SearchForm } from './components/SearchForm.tsx'
+import { SelectionBar } from './components/SelectionBar.tsx'
 import { errorMessage, SHOP_LABEL } from './messages.ts'
 import { SEASON_OPTIONS } from './options.ts'
+import { downloadOfferPdf } from './pdf/download.ts'
+import type { SelectedTyre } from './pdf/offer-model.ts'
 
 export interface AppProps {
   search?: SearchFn
+  /** Builds and saves the offer PDF from the selection (replaced in tests). */
+  makeOfferPdf?: (items: SelectedTyre[]) => Promise<void>
 }
 
 type ShopState =
@@ -74,7 +79,10 @@ function summaryText(q: SearchQuery, shops: ShopId[]): string {
   ].join(' · ')
 }
 
-export function App({ search = defaultSearch }: AppProps) {
+export function App({ search = defaultSearch, makeOfferPdf = downloadOfferPdf }: AppProps) {
+  // Ticked tyres in tick order; kept across searches, only in memory (AC31).
+  const [selection, setSelection] = useState<SelectedTyre[]>([])
+  const selectedKeys = useMemo(() => new Set(selection.map((s) => offerKey(s.offer))), [selection])
   const [code, setCode] = useState(readCode)
   const [codeError, setCodeError] = useState<string | null>(null)
   const [shops, setShops] = useState<Record<ShopId, ShopState>>(IDLE)
@@ -92,6 +100,15 @@ export function App({ search = defaultSearch }: AppProps) {
       ),
     [shops],
   )
+
+  const toggle = (offer: TireOffer) => {
+    const key = offerKey(offer)
+    setSelection((prev) =>
+      prev.some((s) => offerKey(s.offer) === key)
+        ? prev.filter((s) => offerKey(s.offer) !== key)
+        : [...prev, { offer, quantity: lastSearch?.query.quantity ?? 1 }],
+    )
+  }
 
   const saveCode = (value: string) => {
     storage((s) => s.setItem(CODE_KEY, value))
@@ -141,7 +158,7 @@ export function App({ search = defaultSearch }: AppProps) {
   }
 
   return (
-    <main className="app">
+    <main className={selection.length > 0 ? 'app app--selection' : 'app'}>
       <header className="topbar">
         <h1>Reifen-Preisvergleich</h1>
       </header>
@@ -178,8 +195,14 @@ export function App({ search = defaultSearch }: AppProps) {
                 ) : null
               })}
             </div>
-            <ResultList groups={groups} />
+            <ResultList groups={groups} selected={selectedKeys} onToggle={toggle} />
           </section>
+          <SelectionBar
+            items={selection}
+            onRemove={(item) => toggle(item.offer)}
+            onClear={() => setSelection([])}
+            onOfferPdf={() => makeOfferPdf(selection)}
+          />
         </div>
       )}
     </main>
