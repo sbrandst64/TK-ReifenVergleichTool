@@ -145,8 +145,9 @@ aufgeführt und gelten, solange niemand widerspricht.
 - **Auswahl:** Jede Angebotszeile hat eine Checkbox. Ein gewählter Reifen merkt sich die Stückzahl
   der Suche, in der er angehakt wurde (nicht änderbar). Die Auswahl bleibt über weitere Suchen
   erhalten (z. B. Mischbereifung vorne/hinten), lebt aber nur im offenen Fenster (kein Speichern,
-  damit keine alten Preise liegen bleiben). Eine Leiste zeigt die Auswahl, lässt einzelne Reifen
-  entfernen und bietet „Angebot als PDF“ und „Auswahl aufheben“.
+  damit keine alten Preise liegen bleiben). Die Liste der Auswahl steht im linken Bereich unter dem
+  Suchknopf, lässt einzelne Reifen entfernen und bietet „Auswahl aufheben“. „Angebot als PDF“
+  schwebt als eigener Knopf unten rechts (später kommt dort „In den Warenkorb“ dazu).
 - **Angebots-PDF** nach der Excel-Vorlage der Werkstatt („Reifen Angebot_email_2026.xlsx“, Stand Excel,
   ohne Termin und Storno-Hinweis). Es heißt „Reifen-Angebot“ und ist keine Rechnung.
   - Kopfbild der Werkstatt aus der Vorlage, Titel „REIFEN - ANGEBOT“.
@@ -270,7 +271,8 @@ In Klammern steht die Phase. „Fixture-Daten“ heißt: anonymisierte, aufgezei
 **Auswahl und Angebots-PDF (3.7)**
 - AC31 (P5) – Ein Haken an einer Angebotszeile nimmt den Reifen mit der Stückzahl seiner Suche in die
   Auswahl. Nach einer neuen Suche ist er weiter ausgewählt. „Auswahl aufheben“ leert sie, ein
-  Entfernen-Knopf nimmt einen einzelnen Reifen heraus.
+  Entfernen-Knopf nimmt einen einzelnen Reifen heraus. Liste und „Auswahl aufheben“ stehen im
+  linken Bereich unter „Suchen“; „Angebot als PDF“ steht außerhalb davon unten rechts.
 - AC32 (P5) – Im PDF sind Kunde, E-Mail und Tel:Nr leere Textfelder; Datum ist das heutige Datum;
   Dimension nennt jede gewählte Größe genau einmal; Stück ist die Summe aller Zeilen.
 - AC33 (P5) – Das PDF hat je gewähltem Reifen eine Zeile mit Bezeichnung, Dimension mit LI/SI, Stück

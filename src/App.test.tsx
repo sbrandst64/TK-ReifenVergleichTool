@@ -298,7 +298,26 @@ describe('App', () => {
       return { user, search, makeOfferPdf }
     }
 
-    const bar = () => screen.getByRole('region', { name: 'Auswahl' })
+    // list + "Auswahl aufheben" sit in the left panel, the PDF action floats bottom right
+    const bar = () =>
+      within(screen.getByTestId('search-panel')).getByRole('region', { name: 'Auswahl' })
+    const actions = () => screen.getByRole('region', { name: 'Aktionen zur Auswahl' })
+
+    it('AC31: the selected list sits in the left panel below the search button', async () => {
+      const { user } = await setup()
+      expect(screen.queryByRole('region', { name: 'Aktionen zur Auswahl' })).toBeNull()
+      await user.click(
+        await screen.findByRole('checkbox', { name: 'PIRELLI W Sotozero 3 (Göggel) auswählen' }),
+      )
+      const searchButton = screen.getByRole('button', { name: 'Suchen' })
+      expect(
+        searchButton.compareDocumentPosition(bar()) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy()
+      expect(within(bar()).getByRole('button', { name: 'Auswahl aufheben' })).toBeInTheDocument()
+      expect(within(bar()).queryByRole('button', { name: 'Angebot als PDF' })).toBeNull()
+      expect(screen.getByTestId('search-panel')).not.toContainElement(actions())
+      expect(within(actions()).getByRole('button', { name: 'Angebot als PDF' })).toBeInTheDocument()
+    })
 
     it('AC31: a tick keeps the tyre with its quantity, also after the next search', async () => {
       const { user } = await setup()
@@ -344,7 +363,7 @@ describe('App', () => {
         await screen.findByRole('checkbox', { name: 'PIRELLI W Sotozero 3 (Göggel) auswählen' }),
       )
       const calls = search.mock.calls.length
-      await user.click(within(bar()).getByRole('button', { name: 'Angebot als PDF' }))
+      await user.click(within(actions()).getByRole('button', { name: 'Angebot als PDF' }))
       expect(makeOfferPdf).toHaveBeenCalledWith(
         [{ offer: pirelli, quantity: 2 }],
         DEFAULT_PDF_TEXTS,
