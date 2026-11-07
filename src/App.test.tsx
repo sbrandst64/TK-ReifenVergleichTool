@@ -2,9 +2,19 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { DEFAULT_PDF_TEXTS, type PdfTexts } from '../supabase/functions/_shared/pdf-texts.ts'
 import type { SearchResponse, ShopId, TireOffer } from '../supabase/functions/_shared/types.ts'
-import { UnauthorizedError, type SearchFn } from './api.ts'
+import { UnauthorizedError, type SearchFn, type SettingsApi } from './api.ts'
 import { App } from './App.tsx'
+
+// No network in tests: the default settings service answers with the template texts.
+vi.mock('./api.ts', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./api.ts')>()),
+  defaultSettings: {
+    load: async () => DEFAULT_PDF_TEXTS,
+    save: async (_code: string, texts: PdfTexts) => texts,
+  },
+}))
 
 let seq = 0
 const offer = (over: Partial<TireOffer> = {}): TireOffer => ({
@@ -324,8 +334,108 @@ describe('App', () => {
       )
       const calls = search.mock.calls.length
       await user.click(within(bar()).getByRole('button', { name: 'Angebot als PDF' }))
-      expect(makeOfferPdf).toHaveBeenCalledWith([{ offer: pirelli, quantity: 2 }])
+      expect(makeOfferPdf).toHaveBeenCalledWith(
+        [{ offer: pirelli, quantity: 2 }],
+        DEFAULT_PDF_TEXTS,
+      )
       expect(search.mock.calls.length).toBe(calls)
+    })
+  })
+
+  describe('PDF text settings', () => {
+    const stored: PdfTexts = { ...DEFAULT_PDF_TEXTS, title: 'GESPEICHERT' }
+
+    function settingsWith(over: Partial<SettingsApi> = {}) {
+      return {
+        load: vi.fn(async () => stored),
+        save: vi.fn(async (_code: string, texts: PdfTexts) => texts),
+        ...over,
+      }
+    }
+
+    async function openSettings(settings: SettingsApi) {
+      localStorage.setItem('werkstatt-code', 'abc')
+      const makeOfferPdf = vi.fn(async () => {})
+      const user = userEvent.setup()
+      render(
+        <App
+          search={searchWith({ goeggel: async () => ok('goeggel', [offer({ brand: 'PIRELLI' })]) })}
+          makeOfferPdf={makeOfferPdf}
+          settings={settings}
+        />,
+      )
+      await user.click(screen.getByRole('button', { name: 'Einstellungen' }))
+      const dialog = await screen.findByRole('dialog', { name: 'PDF-Texte' })
+      return { user, dialog, makeOfferPdf }
+    }
+
+    it('AC36: "Einstellungen" opens all PDF texts, prefilled with the stored ones', async () => {
+      const settings = settingsWith()
+      const { dialog } = await openSettings(settings)
+      expect(settings.load).toHaveBeenCalledWith('abc')
+      expect(within(dialog).getByLabelText('Titel')).toHaveValue('GESPEICHERT')
+      expect(within(dialog).getByLabelText('Beschriftung Kunde')).toHaveValue('Kunde:')
+      expect(within(dialog).getByLabelText('Hinweis Gültigkeit')).toHaveValue(
+        DEFAULT_PDF_TEXTS.validity,
+      )
+      expect(within(dialog).getByLabelText('Zusatz 1 Text')).toHaveValue(
+        'Räder umstecken PKW bis 17":',
+      )
+      expect(within(dialog).getByLabelText('Zusatz 1 Preis')).toHaveValue('€ 34,-')
+    })
+
+    it('AC37: "Speichern" stores the texts centrally and the next PDF uses them', async () => {
+      const settings = settingsWith()
+      const { user, dialog, makeOfferPdf } = await openSettings(settings)
+      const title = within(dialog).getByLabelText('Titel')
+      await user.clear(title)
+      await user.type(title, 'WINTER-ANGEBOT')
+      await user.click(within(dialog).getByRole('button', { name: 'Speichern' }))
+      expect(settings.save).toHaveBeenCalledWith(
+        'abc',
+        expect.objectContaining({ title: 'WINTER-ANGEBOT' }),
+      )
+      expect(screen.queryByRole('dialog')).toBeNull()
+
+      await user.click(screen.getByRole('button', { name: 'Suchen' }))
+      await user.click(await screen.findByRole('checkbox', { name: /PIRELLI/ }))
+      await user.click(screen.getByRole('button', { name: 'Angebot als PDF' }))
+      expect(makeOfferPdf).toHaveBeenCalledWith(
+        expect.any(Array),
+        expect.objectContaining({ title: 'WINTER-ANGEBOT' }),
+      )
+    })
+
+    it('AC38: extra rows can be added and removed', async () => {
+      const settings = settingsWith()
+      const { user, dialog } = await openSettings(settings)
+      await user.click(within(dialog).getByRole('button', { name: 'Zeile hinzufügen' }))
+      await user.type(within(dialog).getByLabelText('Zusatz 6 Text'), 'Felgen lackieren')
+      await user.type(within(dialog).getByLabelText('Zusatz 6 Preis'), '€ 80,-')
+      await user.click(within(dialog).getByRole('button', { name: 'Zusatz 1 entfernen' }))
+      await user.click(within(dialog).getByRole('button', { name: 'Speichern' }))
+      const saved = settings.save.mock.calls[0][1]
+      expect(saved.extras).toHaveLength(5)
+      expect(saved.extras[0].text).toBe('Räder umstecken SUV/LLKW/ab 18":')
+      expect(saved.extras[4]).toEqual({ text: 'Felgen lackieren', price: '€ 80,-' })
+    })
+
+    it('AC39: "Auf Vorlage zurücksetzen" fills in the template texts', async () => {
+      const { user, dialog } = await openSettings(settingsWith())
+      await user.click(within(dialog).getByRole('button', { name: 'Auf Vorlage zurücksetzen' }))
+      expect(within(dialog).getByLabelText('Titel')).toHaveValue('REIFEN - ANGEBOT')
+    })
+
+    it('keeps the dialog open with a message when saving fails; "Abbrechen" discards', async () => {
+      const settings = settingsWith({ save: vi.fn(async () => Promise.reject(new Error('x'))) })
+      const { user, dialog } = await openSettings(settings)
+      await user.type(within(dialog).getByLabelText('Titel'), ' NEU')
+      await user.click(within(dialog).getByRole('button', { name: 'Speichern' }))
+      expect(await within(dialog).findByRole('alert')).toHaveTextContent('nicht gespeichert')
+      await user.click(within(dialog).getByRole('button', { name: 'Abbrechen' }))
+      expect(screen.queryByRole('dialog')).toBeNull()
+      await user.click(screen.getByRole('button', { name: 'Einstellungen' }))
+      expect(screen.getByLabelText('Titel')).toHaveValue('GESPEICHERT')
     })
   })
 })

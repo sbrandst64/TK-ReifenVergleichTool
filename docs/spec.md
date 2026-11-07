@@ -164,6 +164,17 @@ aufgeführt und gelten, solange niemand widerspricht.
   - Alle vorbefüllten Werte sind ebenfalls Formularfelder und im PDF änderbar. Der Gesamtpreis
     rechnet sich dabei nicht neu.
   - Das PDF entsteht im Browser. Kundendaten werden nicht an einen Server geschickt.
+- **PDF-Texte einstellen** (Wunsch 2026-11-07): Knopf „Einstellungen“ rechts oben öffnet ein
+  Fenster, in dem jeder Text des Angebots bearbeitbar ist: Titel, Feldbeschriftungen, Saisonen,
+  Preisblock, Spaltenköpfe, Gültigkeitshinweis, „zusätzlich“-Zeilen (Text + Preis, hinzufügen und
+  entfernen) und „Gesamtpreis“. „Speichern“ legt die Texte **zentral für alle Geräte** ab,
+  „Auf Vorlage zurücksetzen“ füllt die Texte der Excel-Vorlage ein. Jedes neue PDF nutzt die
+  gespeicherten Texte.
+  - Speicher: Function `settings` (GET/PUT, Werkstatt-Code wie bei der Suche). In Supabase eine
+    Tabelle `app_settings` (nur Service-Role, RLS ohne Policies); lokal eine Datei.
+  - Prüfung: nur Texte (je ≤ 200 Zeichen), höchstens 20 Zusatzzeilen, Anfrage ≤ 32 KB. Fehlende
+    Texte werden mit der Vorlage ergänzt. Ist nichts gespeichert, gilt die Vorlage.
+  - Zu breite Beschriftungen werden im PDF kleiner gesetzt, damit nichts überlappt.
 
 ## 4. Non-Goals
 
@@ -267,7 +278,22 @@ In Klammern steht die Phase. „Fixture-Daten“ heißt: anonymisierte, aufgezei
   und keine Zeile fehlt. Die Saison-Kästchen der gewählten Reifen sind angehakt, die anderen nicht.
 - AC34 (P5) – Der Gesamtpreis ist die Summe aus Stück × VK-Preis/Stück aller Zeilen. Die Zusatzpreise
   (umstecken, einlagern, waschen, TPMS) gehen nicht ein.
-- AC35 (P5) – Beim Erstellen des PDFs geht keine Anfrage an die Such-API.
+- AC35 (P5) – Beim Erstellen des PDFs geht keine Anfrage an die Such-API, und keine Anfrage enthält
+  Kundendaten.
+- AC36 (P5) – „Einstellungen“ rechts oben öffnet ein Fenster mit allen PDF-Texten, vorbefüllt mit
+  den aktuell gespeicherten Texten.
+- AC37 (P5) – Nach „Speichern“ nutzt das nächste PDF die neuen Texte, und ein anderes Gerät erhält
+  beim Laden dieselben Texte (zentral gespeichert).
+- AC38 (P5) – Zusatzzeilen lassen sich hinzufügen und entfernen; leere Zeilen werden nicht
+  gespeichert. Sie stehen im PDF nur zur Information und gehen nicht in den Gesamtpreis ein.
+- AC39 (P5) – „Auf Vorlage zurücksetzen“ füllt das Fenster mit den Texten der Excel-Vorlage.
+- AC40 (P5) – Der Dienst `settings` liefert 401 ohne gültigen Code, 400 bei ungültigen Texten
+  (kein Text, > 200 Zeichen, > 20 Zusatzzeilen) und die Vorlage, solange nichts gespeichert ist.
+
+**Meldungen**
+- AC41 (P1) – Antwortet Göggel mit der Weiterleitung auf die Login-Seite (abgelaufene Sitzung),
+  zeigt die UI „Göggel: Sitzung abgelaufen – bitte erneut suchen“ statt „Shop-Seite hat sich
+  geändert“.
 
 ## 6. Architektur (Kurzfassung)
 

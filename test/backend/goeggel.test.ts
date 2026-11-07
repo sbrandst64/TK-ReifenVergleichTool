@@ -39,7 +39,15 @@ const query = (over: Partial<SearchQuery> = {}): SearchQuery => ({
   ...over,
 })
 
-function shop(opts: { nurvfgInitiallyOff?: boolean; detailStatus?: number } = {}) {
+// What Göggel really sends to an AJAX call when the session has expired (seen live 2026-11-07).
+const EXPIRED_REDIRECT = `<!DOCTYPE html><html><head>
+<script type="text/javascript" language="Javascript"><!--
+parent.location.href='login.php?m=search';
+//--></script><title></title></head></html>`
+
+function shop(
+  opts: { nurvfgInitiallyOff?: boolean; detailStatus?: number; sessionExpired?: boolean } = {},
+) {
   let nurvfgOff = opts.nurvfgInitiallyOff ?? false
   const routes: FakeRoute[] = [
     {
@@ -60,6 +68,7 @@ function shop(opts: { nurvfgInitiallyOff?: boolean; detailStatus?: number } = {}
       path: '/includes/php_ajax/ajax_search.php',
       when: (f) => f.get('func') === 'holeSuchergebnis',
       respond: (c) => {
+        if (opts.sessionExpired) return htmlResponse(EXPIRED_REDIRECT, { contentType: UTF8_HTML })
         if (nurvfgOff) return jsonResponse(NURVFG_OFF, UTF8_HTML)
         return jsonResponse(c.form.get('hersteller') === 'MICHELIN' ? MICHELIN : P1, UTF8_HTML)
       },
@@ -290,5 +299,12 @@ describe('searchGoeggel', () => {
     expect(await codeOf(searchGoeggel(query(), { ...deps(fetchFn), credentials: null }))).toBe(
       'LOGIN_FAILED',
     )
+  })
+})
+
+describe('Göggel session expiry', () => {
+  it('AC41: the JS redirect to the login page is reported as SESSION_EXPIRED, not LAYOUT_CHANGED', async () => {
+    const { fetchFn } = shop({ sessionExpired: true })
+    expect(await codeOf(searchGoeggel(query(), deps(fetchFn)))).toBe('SESSION_EXPIRED')
   })
 })
