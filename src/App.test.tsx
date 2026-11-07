@@ -56,6 +56,14 @@ async function renderAndSearch(search: SearchFn) {
 beforeEach(() => localStorage.clear())
 
 describe('App', () => {
+  it('shows the TK Kopf logo top left, before the title', () => {
+    render(<App search={vi.fn<SearchFn>()} />)
+    const logo = screen.getByRole('img', { name: 'TK Kopf GmbH' })
+    expect(logo.getAttribute('src')).toMatch(/logos\/tk-kopf\.jpg$/)
+    const title = screen.getByRole('heading', { level: 1, name: 'Reifen-Preisvergleich' })
+    expect(logo.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
   it('asks for the workshop code first and remembers it', async () => {
     const user = userEvent.setup()
     render(<App search={searchWith({})} />)
