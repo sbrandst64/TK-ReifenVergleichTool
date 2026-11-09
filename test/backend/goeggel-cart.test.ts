@@ -14,6 +14,7 @@ import {
   jsonResponse,
   redirectResponse,
   type FakeRoute,
+  type RecordedCall,
 } from '../helpers/fake-fetch.ts'
 
 const SESS = '0'.repeat(32)
@@ -130,7 +131,7 @@ async function codeOf(p: Promise<unknown>): Promise<string> {
   return 'NO_ERROR'
 }
 
-const writes = (calls: { method: string; url: URL }[]) =>
+const writes = (calls: RecordedCall[]) =>
   calls.filter((c) => c.method === 'POST' && c.url.pathname === '/scart.php')
 
 describe('parseGoeggelOrderRows', () => {

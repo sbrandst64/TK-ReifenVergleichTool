@@ -1,9 +1,10 @@
 // Local stand-in for the Supabase Edge Functions: serves the same handlers on
-// http://localhost:8787/functions/v1/search and /settings using Node's built-in HTTP server.
+// http://localhost:8787/functions/v1/search, /cart and /settings using Node's built-in HTTP server.
 // Credentials come from supabase/functions/.env (git-ignored), loaded via --env-file.
 // PDF texts are kept in supabase/.dev-settings.json (git-ignored) instead of the Supabase table.
 // Usage: npm run dev:api
 import { createServer } from 'node:http'
+import { handleCart } from '../supabase/functions/_shared/cart-handler.ts'
 import { handleSearch } from '../supabase/functions/_shared/search-handler.ts'
 import { handleSettings } from '../supabase/functions/_shared/settings-handler.ts'
 import { fileSettingsStore } from './file-settings-store.ts'
@@ -16,7 +17,11 @@ const settingsStore = fileSettingsStore(
 createServer(async (req, res) => {
   try {
     const path = req.url?.split('?')[0]
-    if (path !== '/functions/v1/search' && path !== '/functions/v1/settings') {
+    if (
+      path !== '/functions/v1/search' &&
+      path !== '/functions/v1/cart' &&
+      path !== '/functions/v1/settings'
+    ) {
       res.writeHead(404).end()
       return
     }
@@ -35,7 +40,9 @@ createServer(async (req, res) => {
     const response =
       path === '/functions/v1/settings'
         ? await handleSettings(request, process.env, settingsStore)
-        : await handleSearch(request, process.env)
+        : path === '/functions/v1/cart'
+          ? await handleCart(request, process.env)
+          : await handleSearch(request, process.env)
     res.writeHead(response.status, Object.fromEntries(response.headers))
     res.end(Buffer.from(await response.arrayBuffer()))
   } catch (e) {
@@ -43,7 +50,7 @@ createServer(async (req, res) => {
     res.writeHead(500).end()
   }
 }).listen(port, () => {
-  console.log(`Dev-API läuft: http://localhost:${port}/functions/v1/search und /settings`)
+  console.log(`Dev-API läuft: http://localhost:${port}/functions/v1/search, /cart und /settings`)
   for (const name of ['WERKSTATT_CODE', 'WEICHBERGER_USER', 'GOEGGEL_USER']) {
     if (!process.env[name])
       console.log(`  Hinweis: ${name} ist nicht gesetzt (supabase/functions/.env)`)

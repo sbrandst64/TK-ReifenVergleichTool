@@ -3,7 +3,14 @@
 import { searchGoeggel } from './adapters/goeggel.ts'
 import { searchWeichberger, type AdapterDeps } from './adapters/weichberger.ts'
 import { loadConfig, type AppConfig } from './config.ts'
-import { corsHeaders as cors, json, safeEqual, type Env } from './http-common.ts'
+import {
+  corsHeaders as cors,
+  isInt,
+  json,
+  safeEqual,
+  withTimeout,
+  type Env,
+} from './http-common.ts'
 import { toTireOffer } from './pricing.ts'
 import {
   AdapterError,
@@ -40,9 +47,6 @@ const failure = (shop: ShopId | null, code: ApiErrorCode, message: string): Sear
   error: { code, message },
 })
 
-const isInt = (v: unknown, min: number, max: number): v is number =>
-  typeof v === 'number' && Number.isInteger(v) && v >= min && v <= max
-
 function parseRequest(body: unknown): { shop: ShopId; query: SearchQuery } | null {
   if (typeof body !== 'object' || body === null) return null
   const { shop, query } = body as { shop?: unknown; query?: Record<string, unknown> }
@@ -73,14 +77,6 @@ function parseRequest(body: unknown): { shop: ShopId; query: SearchQuery } | nul
       brands: [...new Set(normalizedBrands)],
     },
   }
-}
-
-function withTimeout<T>(work: Promise<T>, ms: number): Promise<T> {
-  let timer: ReturnType<typeof setTimeout> | undefined
-  const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => reject(new AdapterError('TIMEOUT', 'Shop antwortet nicht')), ms)
-  })
-  return Promise.race([work, timeout]).finally(() => clearTimeout(timer))
 }
 
 export async function handleSearch(

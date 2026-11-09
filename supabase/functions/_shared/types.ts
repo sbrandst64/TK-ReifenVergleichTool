@@ -61,6 +61,8 @@ export type AdapterErrorCode =
   | 'AUTO_ORDER_ENABLED'
   | 'AUTO_ORDER_UNKNOWN'
   | 'FORBIDDEN_ENDPOINT'
+  | 'CART_REJECTED'
+  | 'ITEM_NOT_FOUND'
 
 export type ApiErrorCode = AdapterErrorCode | 'BAD_REQUEST' | 'UNAUTHORIZED' | 'CONFIG_ERROR'
 
@@ -71,6 +73,45 @@ export class AdapterError extends Error {
     this.name = 'AdapterError'
     this.code = code
   }
+}
+
+/** One selected tyre to put into a shop's cart (spec 3.4). The size is needed to find it again. */
+export interface CartItem {
+  shopArticleId: string
+  quantity: number
+  width: number
+  height: number
+  rim: number
+  /** Shop's own article text; Weichberger shows it on the basket line. */
+  description: string
+}
+
+export interface CartItemResult {
+  shopArticleId: string
+  ok: boolean
+  error: null | { code: ApiErrorCode; message: string }
+}
+
+export interface CartResponse {
+  shop: ShopId | null
+  /** One entry per requested item, in request order; empty when the whole shop failed. */
+  results: CartItemResult[]
+  error: null | { code: ApiErrorCode; message: string }
+}
+
+export const cartOk = (shopArticleId: string): CartItemResult => ({
+  shopArticleId,
+  ok: true,
+  error: null,
+})
+
+/** Failure of a single item; anything unexpected is reported without details. */
+export function cartFailed(shopArticleId: string, e: unknown): CartItemResult {
+  const error =
+    e instanceof AdapterError
+      ? { code: e.code, message: e.message }
+      : { code: 'UPSTREAM_ERROR' as const, message: 'Unerwarteter Fehler beim Ablegen' }
+  return { shopArticleId, ok: false, error }
 }
 
 export interface SearchResponse {

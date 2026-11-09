@@ -1,11 +1,22 @@
 // Weichberger B2B shop (ASP.NET MVC, server-rendered HTML).
 // Flow (phase0-recon.md): login form → TyreSearch (+ redirect sets the search in the session)
 // → SearchResult/{cat} with page + stock filter → GET SearchResult (HTML) → footer for page count.
+// Cart (spec 3.4): login → read the setting "Automatische Bestellung" (fail closed) → one
+// JsonInsertIntoBasket per article. Nothing else of the basket/order area is reachable.
 import { parseHTML } from 'linkedom'
 import type { Credentials } from '../config.ts'
 import { ShopSession, type HttpResult } from '../http-session.ts'
 import { parseWeichbergerDescription } from '../tire.ts'
-import { AdapterError, type SearchQuery, type Season, type ShopOffer } from '../types.ts'
+import {
+  AdapterError,
+  cartFailed,
+  cartOk,
+  type CartItem,
+  type CartItemResult,
+  type SearchQuery,
+  type Season,
+  type ShopOffer,
+} from '../types.ts'
 
 export interface AdapterDeps {
   credentials: Credentials | null
@@ -28,8 +39,16 @@ const ALLOWED_PATHS = [
   /^\/\d+\/Items\/SearchResult\/[0-9a-f-]{36}$/,
 ]
 
-export function isAllowedWeichbergerUrl(url: URL): boolean {
-  return url.origin === WEICHBERGER_BASE && ALLOWED_PATHS.some((r) => r.test(url.pathname))
+/** Read only: the account settings are never posted to (non-goal 7). */
+const GET_ONLY_PATHS = [/^\/\d+\/cu\/UserSettings$/]
+/** Write only: puts one article into the basket. Checkout and orders are not on any list (AC21). */
+const POST_ONLY_PATHS = [/^\/\d+\/b\/JsonInsertIntoBasket$/]
+
+/** `form` is set for POST requests only (see ShopSession). */
+export function isAllowedWeichbergerUrl(url: URL, form?: Record<string, string>): boolean {
+  if (url.origin !== WEICHBERGER_BASE) return false
+  if (ALLOWED_PATHS.some((r) => r.test(url.pathname))) return true
+  return (form === undefined ? GET_ONLY_PATHS : POST_ONLY_PATHS).some((r) => r.test(url.pathname))
 }
 
 const clean = (s: string | null | undefined) => (s ?? '').replace(/\s+/g, ' ').trim()
@@ -228,4 +247,110 @@ export async function runWeichbergerSearch(
     .filter((o) => o.stockTotal >= query.quantity)
     .sort((a, b) => a.netEkCents - b.netEkCents)
     .slice(0, maxOffers)
+}
+
+export type AutoOrderState = 'on' | 'off' | 'unknown'
+const AUTO_ORDER_SETTING = 'Automatische Bestellung'
+
+/**
+ * State of the account setting "Automatische Bestellung" on the settings page. Every setting is a
+ * hidden "<prefix>.Name" input followed by its value input; the switch is the checkbox
+ * "<prefix>.ValueBoolean". The real page renders the settings twice (two forms with different
+ * prefixes), so every copy must have its own checkbox and all copies must agree. Anything else is
+ * "unknown" (fail closed).
+ */
+export function parseWeichbergerAutoOrder(html: string): AutoOrderState {
+  const { document } = parseHTML(
+    /<html[\s>]/i.test(html) ? html : `<!doctype html><html><body>${html}</body></html>`,
+  )
+  const inputs = [...document.querySelectorAll('input')]
+  const fields = inputs
+    .filter(
+      (i) =>
+        (i.getAttribute('name') ?? '').endsWith('.Name') &&
+        clean(i.getAttribute('value')) === AUTO_ORDER_SETTING,
+    )
+    .map((i) => i.getAttribute('name')!.replace(/\.Name$/, '.ValueBoolean'))
+  if (fields.length === 0) return 'unknown'
+  const ticked: boolean[] = []
+  for (const field of new Set(fields)) {
+    const boxes = inputs.filter(
+      (i) =>
+        i.getAttribute('name') === field &&
+        (i.getAttribute('type') ?? '').toLowerCase() === 'checkbox',
+    )
+    // one checkbox per occurrence of the setting, otherwise the page is not what we know
+    if (boxes.length !== fields.filter((f) => f === field).length) return 'unknown'
+    ticked.push(...boxes.map((b) => b.hasAttribute('checked')))
+  }
+  if (ticked.every((t) => !t)) return 'off'
+  return ticked.every((t) => t) ? 'on' : 'unknown'
+}
+
+async function insertIntoBasket(
+  session: ShopSession,
+  base: string,
+  item: CartItem,
+): Promise<CartItemResult> {
+  try {
+    const res = ensureLoggedIn(
+      await session.post(
+        `${base}/b/JsonInsertIntoBasket`,
+        {
+          itemID: item.shopArticleId,
+          quantity: String(item.quantity),
+          imagepath: '',
+          description: item.description,
+          info: '',
+        },
+        { xhr: true },
+      ),
+    )
+    let success = false
+    try {
+      success = (JSON.parse(res.text) as { success?: unknown }).success === true
+    } catch {
+      success = false
+    }
+    if (!success) {
+      throw new AdapterError(
+        'CART_REJECTED',
+        'Weichberger: Artikel wurde nicht in den Warenkorb übernommen',
+      )
+    }
+    return cartOk(item.shopArticleId)
+  } catch (e) {
+    return cartFailed(item.shopArticleId, e)
+  }
+}
+
+/** Puts the items into the Weichberger basket. Never orders (spec 3.4, AC19–AC21). */
+export async function addToCartWeichberger(
+  items: CartItem[],
+  deps: AdapterDeps,
+): Promise<CartItemResult[]> {
+  if (!deps.credentials) throw new AdapterError('LOGIN_FAILED', 'Weichberger: Zugangsdaten fehlen')
+  const session = new ShopSession({
+    baseUrl: WEICHBERGER_BASE,
+    isAllowed: isAllowedWeichbergerUrl,
+    fetchFn: deps.fetchFn,
+    timeoutMs: deps.timeoutMs,
+  })
+  const base = await login(session, deps.credentials)
+
+  // Safety rule: with automatic ordering switched on, a filled basket would be ordered by the
+  // shop itself at the stored time. So the basket is only touched when the switch is clearly off.
+  const settings = ensureLoggedIn(await session.get(`${base}/cu/UserSettings`))
+  const autoOrder = parseWeichbergerAutoOrder(settings.text)
+  if (autoOrder === 'on') {
+    throw new AdapterError('AUTO_ORDER_ENABLED', 'Weichberger: Automatische Bestellung ist aktiv')
+  }
+  if (autoOrder !== 'off') {
+    throw new AdapterError('AUTO_ORDER_UNKNOWN', 'Weichberger: Bestell-Einstellung nicht lesbar')
+  }
+
+  const results: CartItemResult[] = []
+  // Sequential on purpose: the basket lives in the server session of this login.
+  for (const item of items) results.push(await insertIntoBasket(session, base, item))
+  return results
 }

@@ -1,6 +1,7 @@
 // Shared HTTP pieces of the Edge Functions: CORS for the allowed origins and the
 // constant-time check of the workshop code (spec 3.6).
 import { allowedOrigins } from './config.ts'
+import { AdapterError } from './types.ts'
 
 export type Env = Record<string, string | undefined>
 
@@ -23,6 +24,18 @@ export function safeEqual(a: string, b: string): boolean {
   let diff = x.length ^ y.length
   for (let i = 0; i < Math.max(x.length, y.length); i++) diff |= (x[i] ?? 0) ^ (y[i] ?? 0)
   return diff === 0
+}
+
+export const isInt = (v: unknown, min: number, max: number): v is number =>
+  typeof v === 'number' && Number.isInteger(v) && v >= min && v <= max
+
+/** Gives up with TIMEOUT when the shop work takes longer than `ms`. */
+export function withTimeout<T>(work: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new AdapterError('TIMEOUT', 'Shop antwortet nicht')), ms)
+  })
+  return Promise.race([work, timeout]).finally(() => clearTimeout(timer))
 }
 
 export function json(status: number, body: unknown, cors: Record<string, string>): Response {

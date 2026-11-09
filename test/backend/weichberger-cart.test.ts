@@ -13,12 +13,18 @@ import {
   jsonResponse,
   redirectResponse,
   type FakeRoute,
+  type RecordedCall,
 } from '../helpers/fake-fetch.ts'
 
-// Anonymized settings form of the real shop; "Automatische Bestellung" is switched off in it.
+// Anonymized settings of the real shop: the page renders them twice (two forms, prefixes
+// Model[3] and Model[6]); "Automatische Bestellung" is switched off in both.
 const SETTINGS_OFF = fixture('weichberger/usersettings.html')
 const SWITCH = 'name="Model[3].UserSettings[1].ValueBoolean" type="checkbox" value="true" />'
-const SETTINGS_ON = SETTINGS_OFF.replace(SWITCH, SWITCH.replace(' />', ' checked="checked" />'))
+const TICKED = SWITCH.replace(' />', ' checked="checked" />')
+const SETTINGS_ON = SETTINGS_OFF.replace(SWITCH, TICKED).replace(
+  SWITCH.replace('Model[3]', 'Model[6]'),
+  TICKED.replace('Model[3]', 'Model[6]'),
+)
 const LOGIN_FORM =
   '<form action="/100/Account/Login" method="post"><input name="UserName"/><input name="Password" type="password"/></form>'
 const INSERTED = {
@@ -92,12 +98,16 @@ async function codeOf(p: Promise<unknown>): Promise<string> {
   return 'NO_ERROR'
 }
 
-const inserts = (calls: { url: URL }[]) =>
+const inserts = (calls: RecordedCall[]) =>
   calls.filter((c) => c.url.pathname.endsWith('/b/JsonInsertIntoBasket'))
 
 describe('parseWeichbergerAutoOrder', () => {
   it('reads "off" from the real settings form', () => {
     expect(parseWeichbergerAutoOrder(SETTINGS_OFF)).toBe('off')
+  })
+
+  it('the fixture has the form twice, like the real page', () => {
+    expect(SETTINGS_OFF.split('value="Automatische Bestellung"')).toHaveLength(3)
   })
 
   it('reads "on" when the switch is ticked', () => {
@@ -111,7 +121,8 @@ describe('parseWeichbergerAutoOrder', () => {
       'the switch is not a checkbox',
       SETTINGS_OFF.replace(SWITCH, SWITCH.replace('checkbox', 'text')),
     ],
-    ['the setting appears twice', SETTINGS_OFF + SETTINGS_ON],
+    ['the copies of the form disagree', SETTINGS_OFF.replace(SWITCH, TICKED)],
+    ['one copy has no switch', SETTINGS_OFF.replace(SWITCH, '')],
   ])('is "unknown" when %s (fail closed)', (_why, html) => {
     expect(parseWeichbergerAutoOrder(html)).toBe('unknown')
   })

@@ -6,6 +6,10 @@ project_id = "reifen-preisvergleich"
 # so the Supabase JWT check is not needed for this public frontend.
 verify_jwt = false
 
+[functions.cart]
+# Same protection as search: workshop code checked inside the function.
+verify_jwt = false
+
 [functions.settings]
 # Same protection as search: workshop code checked inside the function.
 verify_jwt = false

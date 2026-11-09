@@ -1,11 +1,23 @@
 // Göggel B2B shop (PHP, jQuery AJAX returning JSON with HTML fragments).
 // Flow (phase0-recon.md): login form → holeSuchergebnis (price ascending) → page with
 // filtereSuchergebnis/blaettern until enough stocked offers → EAN from the detail layer.
+// Cart (spec 3.4): the result list is one form; a row is addressed by a row number ("key") that
+// only exists in the session that searched. So: login → same search → find the row → post the
+// whole page form with the quantity in that row → the shop answers with the cart page.
 import { parseHTML } from 'linkedom'
 import type { Credentials } from '../config.ts'
 import { ShopSession } from '../http-session.ts'
-import { parseGoeggelSize, parseLoadSpeed, seasonFromGoeggelIcon } from '../tire.ts'
-import { AdapterError, type SearchQuery, type Season, type ShopOffer } from '../types.ts'
+import { normalizeToken, parseGoeggelSize, parseLoadSpeed, seasonFromGoeggelIcon } from '../tire.ts'
+import {
+  AdapterError,
+  cartFailed,
+  cartOk,
+  type CartItem,
+  type CartItemResult,
+  type SearchQuery,
+  type Season,
+  type ShopOffer,
+} from '../types.ts'
 import { searchCombos, type AdapterDeps } from './weichberger.ts'
 
 export const GOEGGEL_BASE = 'https://goeggel-shop.com'
@@ -17,6 +29,9 @@ export interface PagingInfo {
 
 const AJAX_SEARCH = '/includes/php_ajax/ajax_search.php'
 const AJAX_GLOBAL = '/includes/php_ajax/ajax_global.php'
+const CART = '/scart.php'
+/** Fields of the result-list form as the browser sends them; nothing of the order form. */
+const CART_WRITE_FIELD = /^(anz\d+|key\d+|vkpreis|opt7)$/
 const SEARCH_FUNCS = new Set(['holeSuchergebnis', 'filtereSuchergebnis'])
 const GLOBAL_FUNCS = new Set(['ladeBildanzeige'])
 const SEASON_VALUE: Record<Season, string> = {
@@ -37,6 +52,15 @@ export function isAllowedGoeggelUrl(url: URL, form?: Record<string, string>): bo
       return SEARCH_FUNCS.has(form?.func ?? '')
     case AJAX_GLOBAL:
       return GLOBAL_FUNCS.has(form?.func ?? '')
+    case CART: {
+      // Only "show" (GET) and "write" (POST of the result-list form). The order steps
+      // (site=header …), deleting and address changes stay unreachable (AC21).
+      const site = url.searchParams.get('site')
+      if (site === 'show') return form === undefined
+      if (site === 'write')
+        return form !== undefined && Object.keys(form).every((k) => CART_WRITE_FIELD.test(k))
+      return false
+    }
     default:
       return false
   }
@@ -149,12 +173,12 @@ async function login(session: ShopSession, creds: Credentials): Promise<void> {
   }
 }
 
-async function searchCombo(
+/** Result pages of one search as the shop pages them: only available articles, 20 rows each. */
+async function* resultPages(
   session: ShopSession,
-  query: SearchQuery,
+  query: Pick<SearchQuery, 'width' | 'height' | 'rim'>,
   combo: { brand: string | null; season: Season | null },
-  maxOffers: number,
-): Promise<ShopOffer[]> {
+): AsyncGenerator<ResultJson> {
   const filterUrl = `${AJAX_SEARCH}?sess-shop=${encodeURIComponent(session.cookie('sess-shop') ?? '')}`
   let data = await ajax(session, AJAX_SEARCH, {
     func: 'holeSuchergebnis',
@@ -174,9 +198,27 @@ async function searchCombo(
     if (!isNurVerfuegbarActive(data.filter)) throw layout('Filter „nur verfügbare Artikel“')
   }
 
+  for (let page = 1; ; page++) {
+    yield data
+    const paging = parseGoeggelPaging(data.filter + data.ergtab)
+    if (!paging || paging.to >= paging.total || page >= MAX_PAGES) return
+    data = await ajax(session, filterUrl, {
+      func: 'filtereSuchergebnis',
+      filterart: 'blaettern',
+      filterwert: 'hoch',
+    })
+  }
+}
+
+async function searchCombo(
+  session: ShopSession,
+  query: SearchQuery,
+  combo: { brand: string | null; season: Season | null },
+  maxOffers: number,
+): Promise<ShopOffer[]> {
   const seen = new Set<string>()
   const stocked = new Map<string, ShopOffer>()
-  for (let page = 1; ; page++) {
+  for await (const data of resultPages(session, query, combo)) {
     let added = 0
     for (const o of parseGoeggelResults(data.ergtab)) {
       if (seen.has(o.shopArticleId)) continue
@@ -184,20 +226,8 @@ async function searchCombo(
       added++
       if (o.stockImmediate >= query.quantity) stocked.set(o.shopArticleId, o)
     }
-    const paging = parseGoeggelPaging(data.filter + data.ergtab)
-    if (
-      stocked.size >= maxOffers ||
-      !paging ||
-      paging.to >= paging.total ||
-      added === 0 ||
-      page >= MAX_PAGES
-    )
-      break
-    data = await ajax(session, filterUrl, {
-      func: 'filtereSuchergebnis',
-      filterart: 'blaettern',
-      filterwert: 'hoch',
-    })
+    // leaving the loop stops the paging before the next page is requested
+    if (stocked.size >= maxOffers || added === 0) break
   }
   return [...stocked.values()]
 }
@@ -248,4 +278,151 @@ export async function runGoeggelSearch(
   const offers = [...all.values()].sort((a, b) => a.netEkCents - b.netEkCents).slice(0, maxOffers)
   await fillEans(session, offers)
   return offers
+}
+
+export interface GoeggelOrderRow {
+  shopArticleId: string
+  /** Name of the row's quantity input, e.g. "anz4". */
+  quantityField: string
+  /** Name and value of the row number the shop expects back, e.g. "key4" = "600". */
+  keyField: string
+  key: string
+  artikel: string
+  brand: string
+  profile: string
+}
+
+/** Order fields of every row of a result page (the page is one form posted as a whole). */
+export function parseGoeggelOrderRows(ergtabHtml: string): GoeggelOrderRow[] {
+  if (!ergtabHtml.trim()) return []
+  const { document } = parseHTML(`<!doctype html><html><body>${ergtabHtml}</body></html>`)
+  const rows: GoeggelOrderRow[] = []
+  for (const row of document.querySelectorAll('.clsdiv_search_ergtable_row')) {
+    const text = (cls: string) => clean(row.querySelector(`.${cls}`)?.textContent)
+    const id = row.querySelector('[data-int]')?.getAttribute('data-int')
+    const quantityField = row.querySelector('input[name^="anz"]')?.getAttribute('name') ?? ''
+    const keyInput = row.querySelector('input[name^="key"]')
+    const keyField = keyInput?.getAttribute('name') ?? ''
+    const key = keyInput?.getAttribute('value') ?? ''
+    if (!id) throw layout('Artikelnummer')
+    // both fields must carry the same row index, otherwise the quantity could land on another tyre
+    const index = quantityField.match(/^anz(\d+)$/)?.[1]
+    if (index === undefined || keyField !== `key${index}` || !/^\d+$/.test(key))
+      throw layout('Bestellfeld')
+    rows.push({
+      shopArticleId: id,
+      quantityField,
+      keyField,
+      key,
+      artikel: text('clsdiv_searcherg_artikel'),
+      brand: text('clsdiv_searcherg_hersteller'),
+      profile: text('clsdiv_searcherg_profil'),
+    })
+  }
+  return rows
+}
+
+export interface GoeggelCartPosition {
+  artikel: string
+  profile: string
+  brand: string
+  quantity: number
+}
+
+/** Positions shown on the cart page (hidden fields artikel<i>/profil<i>/hersteller<i>, anz<i>). */
+export function parseGoeggelCartPositions(html: string): GoeggelCartPosition[] {
+  const { document } = parseHTML(
+    /<html[\s>]/i.test(html) ? html : `<!doctype html><html><body>${html}</body></html>`,
+  )
+  // index → fields; rows are numbered artikel0/profil0/hersteller0/anz0, artikel1/…
+  const byIndex = new Map<string, Record<string, string>>()
+  for (const input of document.querySelectorAll('input')) {
+    const m = (input.getAttribute('name') ?? '').match(/^(artikel|profil|hersteller|anz)(\d+)$/)
+    if (!m) continue
+    const fields = byIndex.get(m[2]) ?? {}
+    fields[m[1]] = input.getAttribute('value') ?? ''
+    byIndex.set(m[2], fields)
+  }
+  return [...byIndex.values()]
+    .filter((f) => f.artikel !== undefined)
+    .map((f) => ({
+      artikel: clean(f.artikel),
+      profile: clean(f.profil),
+      brand: clean(f.hersteller),
+      quantity: Number(f.anz ?? 0) || 0,
+    }))
+}
+
+/** Finds the tyre again in a fresh search of its size; returns its page (all rows) and its row. */
+async function findOrderRow(
+  session: ShopSession,
+  item: CartItem,
+): Promise<{ rows: GoeggelOrderRow[]; row: GoeggelOrderRow } | null> {
+  const seen = new Set<string>()
+  for await (const data of resultPages(session, item, { brand: null, season: null })) {
+    const rows = parseGoeggelOrderRows(data.ergtab)
+    const row = rows.find((r) => r.shopArticleId === item.shopArticleId)
+    if (row) return { rows, row }
+    const fresh = rows.filter((r) => !seen.has(r.shopArticleId))
+    if (fresh.length === 0) return null // the shop repeats pages: nothing new will come
+    for (const r of fresh) seen.add(r.shopArticleId)
+  }
+  return null
+}
+
+const same = (a: string, b: string) => normalizeToken(a) === normalizeToken(b)
+
+async function writeToCart(session: ShopSession, item: CartItem): Promise<CartItemResult> {
+  try {
+    const found = await findOrderRow(session, item)
+    if (!found) {
+      throw new AdapterError('ITEM_NOT_FOUND', 'Göggel: Reifen nicht mehr in der Trefferliste')
+    }
+    // The browser posts the whole page: every row with its key, the quantity only where wanted.
+    const form: Record<string, string> = {}
+    for (const r of found.rows) {
+      form[r.quantityField] = r === found.row ? String(item.quantity) : ''
+      form[r.keyField] = r.key
+    }
+    form.vkpreis = 'vkpreis_opt'
+    form.opt7 = ''
+    const sess = encodeURIComponent(session.cookie('sess-shop') ?? '')
+    // The shop answers with a redirect to the cart page (site=show), which is read below.
+    const res = await session.post(`${CART}?site=write&s=1&sess-shop=${sess}`, form)
+    if (/idinploginpwd/.test(res.text)) {
+      throw new AdapterError('SESSION_EXPIRED', 'Göggel: Sitzung abgelaufen')
+    }
+    const inCart = parseGoeggelCartPositions(res.text).some(
+      (p) =>
+        same(p.artikel, found.row.artikel) &&
+        same(p.profile, found.row.profile) &&
+        same(p.brand, found.row.brand) &&
+        p.quantity >= item.quantity,
+    )
+    if (!inCart) {
+      throw new AdapterError('CART_REJECTED', 'Göggel: Position steht nicht im Warenkorb')
+    }
+    return cartOk(item.shopArticleId)
+  } catch (e) {
+    return cartFailed(item.shopArticleId, e)
+  }
+}
+
+/** Puts the items into the Göggel cart. Never orders (spec 3.4, AC21). */
+export async function addToCartGoeggel(
+  items: CartItem[],
+  deps: AdapterDeps,
+): Promise<CartItemResult[]> {
+  if (!deps.credentials) throw new AdapterError('LOGIN_FAILED', 'Göggel: Zugangsdaten fehlen')
+  const session = new ShopSession({
+    baseUrl: GOEGGEL_BASE,
+    isAllowed: isAllowedGoeggelUrl,
+    fetchFn: deps.fetchFn,
+    timeoutMs: deps.timeoutMs,
+  })
+  await login(session, deps.credentials)
+  const results: CartItemResult[] = []
+  // Sequential on purpose: the search and its row numbers live in the server session.
+  for (const item of items) results.push(await writeToCart(session, item))
+  return results
 }

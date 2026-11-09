@@ -19,6 +19,8 @@ const ERROR_TEXT: Record<ApiErrorCode, string> = {
   AUTO_ORDER_ENABLED: 'Automatische Bestellung ist aktiv – Warenkorb wird nicht befüllt',
   AUTO_ORDER_UNKNOWN: 'Bestell-Einstellung nicht lesbar – Warenkorb wird nicht befüllt',
   FORBIDDEN_ENDPOINT: 'Unerlaubter Shop-Aufruf wurde blockiert',
+  CART_REJECTED: 'Shop hat den Reifen nicht in den Warenkorb übernommen',
+  ITEM_NOT_FOUND: 'Reifen im Shop nicht mehr gefunden – bitte neu suchen',
   BAD_REQUEST: 'Ungültige Suchanfrage',
   UNAUTHORIZED: 'Werkstatt-Code ungültig',
   CONFIG_ERROR: 'Server-Konfiguration fehlerhaft',
