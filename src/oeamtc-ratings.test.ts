@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { oeamtcRating, OEAMTC_TEST_URL } from './oeamtc-ratings.ts'
+import { OEAMTC_RESULTS, OEAMTC_TESTS } from './oeamtc-data.ts'
+import { oeamtcRating } from './oeamtc-ratings.ts'
 
+const BASE = 'https://www.oeamtc.at/tests/reifentest/'
 const tyre = (over: Partial<Parameters<typeof oeamtcRating>[0]> = {}) => ({
   brand: 'CONTINENTAL',
   profile: 'WinterContact TS 870',
@@ -10,15 +12,47 @@ const tyre = (over: Partial<Parameters<typeof oeamtcRating>[0]> = {}) => ({
   ...over,
 })
 
-describe('oeamtcRating (ÖAMTC Winterreifentest 2026, spec AC43)', () => {
-  it('returns the overall grade and verdict of a tested tyre in a tested size', () => {
-    expect(oeamtcRating(tyre())).toEqual({ grade: '2,2', verdict: 'gut' })
+describe('oeamtcRating (all ÖAMTC tyre tests 2018–2026, spec AC43)', () => {
+  it('returns grade, verdict, test and the detail page of a tested tyre in a tested size', () => {
+    expect(oeamtcRating(tyre())).toEqual({
+      grade: '2,2',
+      verdict: 'gut',
+      test: 'Winter 2026',
+      url: `${BASE}winterreifentest-2026/continental-wintercontact-ts-870-89453540`,
+    })
+  })
+
+  it('the same tyre in another tested size gets the result of that test', () => {
+    expect(oeamtcRating(tyre({ width: 205, height: 55, rim: 16 }))).toMatchObject({
+      grade: '2,0',
+      test: 'Winter 2024',
+    })
+  })
+
+  it('a tyre tested several times in the same size shows the newest test', () => {
+    // Pirelli Cinturato P1 Verde 185/65 R15: Sommer 2019 3,4 and Sommer 2022 2,3
+    expect(
+      oeamtcRating({
+        brand: 'PIRELLI',
+        profile: 'Cinturato P1 Verde',
+        width: 185,
+        height: 65,
+        rim: 15,
+      }),
+    ).toMatchObject({ grade: '2,3', verdict: 'gut', test: 'Sommer 2022' })
+  })
+
+  it('finds older tests too', () => {
+    expect(
+      oeamtcRating({ brand: 'NEXEN', profile: 'N blue 4Season', width: 175, height: 65, rim: 14 }),
+    ).toMatchObject({ grade: '2,7', verdict: 'befriedigend', test: 'Ganzjahr 2018' })
   })
 
   it('matches brand and model regardless of case, spaces and symbols', () => {
-    expect(oeamtcRating(tyre({ brand: 'Continental', profile: 'WinterContact TS870' }))).toEqual({
+    expect(
+      oeamtcRating(tyre({ brand: 'Continental', profile: 'WinterContact TS870' })),
+    ).toMatchObject({
       grade: '2,2',
-      verdict: 'gut',
     })
     expect(
       oeamtcRating({
@@ -28,31 +62,49 @@ describe('oeamtcRating (ÖAMTC Winterreifentest 2026, spec AC43)', () => {
         height: 65,
         rim: 15,
       }),
-    ).toEqual({ grade: '3,1', verdict: 'befriedigend' })
+    ).toMatchObject({ grade: '3,1', verdict: 'befriedigend' })
+  })
+
+  it('knows that the shops write "Nokian" where ÖAMTC writes "Nokian Tyres"', () => {
+    expect(
+      oeamtcRating({ brand: 'NOKIAN', profile: 'Snowproof 2', width: 185, height: 65, rim: 15 }),
+    ).toMatchObject({ grade: '3,8', test: 'Winter 2026' })
   })
 
   it('gives no rating for a tested model in an untested size', () => {
-    expect(oeamtcRating(tyre({ width: 205, height: 55, rim: 16 }))).toBeUndefined()
+    expect(oeamtcRating(tyre({ width: 195, height: 55, rim: 20 }))).toBeUndefined()
   })
 
   it('gives no rating for a model that was not tested', () => {
     expect(oeamtcRating(tyre({ profile: 'Alpin 6' }))).toBeUndefined()
     expect(oeamtcRating(tyre({ brand: 'MICHELIN' }))).toBeUndefined()
   })
+})
 
-  it('uses the 225/50 R17 table for that size', () => {
-    expect(
-      oeamtcRating({
-        brand: 'PIRELLI',
-        profile: 'Cinturato Winter 3',
-        width: 225,
-        height: 50,
-        rim: 17,
-      }),
-    ).toEqual({ grade: '2,2', verdict: 'gut' })
+describe('ÖAMTC data (imported from oeamtc.at)', () => {
+  const BANDS: [number, string][] = [
+    [1.5, 'sehr gut'],
+    [2.5, 'gut'],
+    [3.5, 'befriedigend'],
+    [4.5, 'genügend'],
+    [5.5, 'nicht genügend'],
+  ]
+  const band = (grade: string) => BANDS.find(([max]) => Number(grade.replace(',', '.')) <= max)?.[1]
+
+  it('has all 20 tests since 2018, newest first, each with its own page', () => {
+    expect(OEAMTC_TESTS).toHaveLength(20)
+    expect(OEAMTC_TESTS[0].label).toBe('Winter 2026')
+    expect(new Set(OEAMTC_TESTS.map((t) => t.label)).size).toBe(20)
+    expect(OEAMTC_TESTS.every((t) => t.url.startsWith('https://www.oeamtc.at/tests/'))).toBe(true)
   })
 
-  it('links to the ÖAMTC test overview as source', () => {
-    expect(OEAMTC_TEST_URL).toBe('https://www.oeamtc.at/tests/reifentest/winterreifentest-2026/')
+  it('has 488 results with a valid test, size, grade and the verdict of its grade band', () => {
+    expect(OEAMTC_RESULTS).toHaveLength(488)
+    for (const [test, product, size, grade, verdict] of OEAMTC_RESULTS) {
+      expect(OEAMTC_TESTS[test], product).toBeDefined()
+      expect(size, product).toMatch(/^\d{3}\/\d{2} R\d{2}$/)
+      expect(grade, product).toMatch(/^\d,\d$/)
+      expect(verdict, `${product} ${grade}`).toBe(band(grade))
+    }
   })
 })

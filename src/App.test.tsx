@@ -262,37 +262,31 @@ describe('App', () => {
     expect(row.querySelector('.avail--yellow')).toHaveTextContent('2–3 Tage')
   })
 
-  it('AC43: a tested tyre in a tested size shows its ÖAMTC grade, other sizes show none', async () => {
+  it('AC43: each tested tyre shows the result of its ÖAMTC test, untested sizes show none', async () => {
+    const conti = {
+      brand: 'CONTINENTAL',
+      profile: 'WinterContact TS 870',
+      season: 'winter' as const,
+    }
     await renderAndSearch(
       searchWith({
         goeggel: async () =>
           ok('goeggel', [
-            offer({
-              brand: 'CONTINENTAL',
-              profile: 'WinterContact TS 870',
-              width: 185,
-              height: 65,
-              rim: 15,
-              season: 'winter',
-            }),
-            offer({
-              brand: 'CONTINENTAL',
-              profile: 'WinterContact TS 870',
-              width: 205,
-              height: 55,
-              rim: 16,
-              season: 'winter',
-            }),
+            offer({ ...conti, width: 185, height: 65, rim: 15 }),
+            offer({ ...conti, width: 205, height: 55, rim: 16 }),
+            offer({ ...conti, width: 195, height: 55, rim: 20 }),
           ]),
       }),
     )
     const links = await screen.findAllByRole('link', { name: 'ÖAMTC-Testseite' })
-    expect(links).toHaveLength(1)
-    const article = links[0].closest('article')!
-    expect(article).toHaveTextContent('185/65 R15')
-    expect(article).toHaveTextContent('Gesamtnote 2,2 (gut)')
-    expect(links[0].getAttribute('href')).toBe(
-      'https://www.oeamtc.at/tests/reifentest/winterreifentest-2026/',
+    expect(links).toHaveLength(2)
+    const card = (size: string) =>
+      screen.getAllByRole('article').find((a) => a.textContent?.includes(size))!
+    expect(card('185/65 R15')).toHaveTextContent('ÖAMTC-Test Winter 2026: Gesamtnote 2,2 (gut)')
+    expect(card('205/55 R16')).toHaveTextContent('ÖAMTC-Test Winter 2024: Gesamtnote 2,0 (gut)')
+    expect(card('195/55 R20')).not.toHaveTextContent('ÖAMTC')
+    expect(within(card('185/65 R15')).getByRole('link').getAttribute('href')).toBe(
+      'https://www.oeamtc.at/tests/reifentest/winterreifentest-2026/continental-wintercontact-ts-870-89453540',
     )
   })
 
