@@ -22,7 +22,7 @@ import { offerKey, ResultList } from './components/ResultList.tsx'
 import { SearchForm } from './components/SearchForm.tsx'
 import { SelectionActions, SelectionList } from './components/Selection.tsx'
 import { SettingsDialog } from './components/SettingsDialog.tsx'
-import { errorMessage, SHOP_LABEL } from './messages.ts'
+import { errorMessage, SHOP_LABEL, SHOP_URL } from './messages.ts'
 import { DEFAULTS, SEASON_OPTIONS } from './options.ts'
 import { downloadOfferPdf } from './pdf/download.ts'
 import type { SelectedTyre } from './pdf/offer-model.ts'
@@ -220,6 +220,24 @@ export function App({
           </div>
           <h1>Reifen-Preisvergleich</h1>
         </div>
+        {/* shop logos open the shop in a new tab; the app stays open (AC42) */}
+        <nav className="shoplinks" aria-label="Shops öffnen">
+          {SHOPS.map((shop) => (
+            <a
+              key={shop}
+              className={`shop-badge shop-badge--${shop} shoplinks__link`}
+              href={SHOP_URL[shop]}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img
+                className="shop-badge__logo"
+                src={`${import.meta.env.BASE_URL}logos/${shop}.png`}
+                alt={`${SHOP_LABEL[shop]}-Shop öffnen`}
+              />
+            </a>
+          ))}
+        </nav>
         {code && (
           <button
             type="button"

@@ -46,6 +46,7 @@ Stand 2026-11-06, Branch `feat/erster-build`.
 | 24 | Auswahl-Liste und „Auswahl aufheben“ links unter „Suchen“, „Angebot als PDF“ schwebt außerhalb unten rechts (AC31). RED: 1181656 | `src/App.test.tsx` | component |
 | 25 | Haken übernimmt die gerade im Filter markierte Stückzahl (ohne neue Suche), spätere Änderungen lassen Gewähltes unverändert; PDF: Zeilen sind Alternativen – „Stück“ nennt jede Zahl einmal, Gesamtpreis nur bei genau einem Reifen, sonst leeres ausfüllbares Feld (AC31, AC32, AC34). RED: 4f45401 | `src/App.test.tsx`, `src/pdf/offer-model.test.ts`, `src/pdf/offer-pdf.test.ts` | component/unit |
 | 26 | Logo „TK Kopf GmbH“ links oben vor dem Titel (PC: oben im linken Panel, Handy: in der Kopfzeile). RED: 5f17afc | `src/App.test.tsx` | component |
+| 27 | Kopf zeigt die Logos von Weichberger und Göggel als Links; Klick öffnet den Shop in neuem Tab (`noopener noreferrer`), die App bleibt offen (AC42). RED: 24521a1 | `src/App.test.tsx` | component |
 | 14 | Filterbereich farblich abgesetzt, Logos lesbar, Tags springen nicht (AC29, manuell) | Browser bei 375, 768, 1024, 1280 px | manuell |
 
 ## Zusätzlich manuell verifiziert (nicht automatisiert)

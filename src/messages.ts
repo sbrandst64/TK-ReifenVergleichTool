@@ -3,6 +3,12 @@ import type { ApiErrorCode, ShopId } from '../supabase/functions/_shared/types.t
 
 export const SHOP_LABEL: Record<ShopId, string> = { weichberger: 'Weichberger', goeggel: 'Göggel' }
 
+/** Shop start pages for the logo links in the header (AC42); the user logs in there themself. */
+export const SHOP_URL: Record<ShopId, string> = {
+  weichberger: 'https://b2b.weichberger.at/',
+  goeggel: 'https://goeggel-shop.com/',
+}
+
 const ERROR_TEXT: Record<ApiErrorCode, string> = {
   LOGIN_FAILED: 'Anmeldung fehlgeschlagen – Zugangsdaten prüfen',
   SESSION_EXPIRED: 'Sitzung abgelaufen – bitte erneut suchen',
