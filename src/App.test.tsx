@@ -257,6 +257,40 @@ describe('App', () => {
     expect(row.querySelector('.avail--yellow')).toHaveTextContent('2–3 Tage')
   })
 
+  it('AC43: a tested tyre in a tested size shows its ÖAMTC grade, other sizes show none', async () => {
+    await renderAndSearch(
+      searchWith({
+        goeggel: async () =>
+          ok('goeggel', [
+            offer({
+              brand: 'CONTINENTAL',
+              profile: 'WinterContact TS 870',
+              width: 185,
+              height: 65,
+              rim: 15,
+              season: 'winter',
+            }),
+            offer({
+              brand: 'CONTINENTAL',
+              profile: 'WinterContact TS 870',
+              width: 205,
+              height: 55,
+              rim: 16,
+              season: 'winter',
+            }),
+          ]),
+      }),
+    )
+    const links = await screen.findAllByRole('link', { name: 'ÖAMTC-Testseite' })
+    expect(links).toHaveLength(1)
+    const article = links[0].closest('article')!
+    expect(article).toHaveTextContent('185/65 R15')
+    expect(article).toHaveTextContent('Gesamtnote 2,2 (gut)')
+    expect(links[0].getAttribute('href')).toBe(
+      'https://www.oeamtc.at/tests/reifentest/winterreifentest-2026/',
+    )
+  })
+
   it('AC11: marks a provisional cheapest offer and missing shipping', async () => {
     await renderAndSearch(
       searchWith({
