@@ -23,12 +23,32 @@ const BRAND_ALIASES: [string, string][] = [
   ['COOPERTIRES', 'COOPER'],
 ]
 
-/** Comparable key of "brand model": upper case, no spaces or symbols, known brand aliases. */
+/** Comparable key of "brand model": upper case, no spaces or symbols, known brand aliases.
+ *  NFKD first, so superscript digits count as digits ("4S²" = "4S2"). */
 export function tyreKey(name: string): string {
-  const key = normalizeToken(name)
+  const key = normalizeToken(name.normalize('NFKD'))
   for (const [long, short] of BRAND_ALIASES)
     if (key.startsWith(long)) return short + key.slice(long.length)
   return key
+}
+
+/**
+ * Shop names that differ from ÖAMTC's spelling of the same tyre: [as a shop writes it, as ÖAMTC
+ * writes it]. Collected by hand from searches of both shops in all tested sizes (2026-11-09);
+ * only pairs that are clearly the same tyre. The size must still match.
+ */
+export const NAME_VARIANTS: [string, string][] = [
+  // Göggel adds Hankook's pattern codes
+  ['HANKOOK K 435 KINERGY eco 2', 'Hankook Kinergy Eco 2'],
+  ['HANKOOK Kinergy 4S2 ( H 750 )', 'Hankook Kinergy 4S 2'],
+  // Göggel abbreviates Nexen Winguard
+  ['NEXEN WG SNOW G 3 WH21', 'NEXEN WINGUARD SNOW´G3'],
+]
+
+let variants: Map<string, string> | null = null
+const variantOf = (key: string) => {
+  variants ??= new Map(NAME_VARIANTS.map(([shop, oeamtc]) => [tyreKey(shop), tyreKey(oeamtc)]))
+  return variants.get(key) ?? key
 }
 
 let index: Map<string, OeamtcRating> | null = null
@@ -55,7 +75,6 @@ export function oeamtcRating(tyre: {
   height: number
   rim: number
 }): OeamtcRating | undefined {
-  return ratings().get(
-    `${tyreKey(`${tyre.brand} ${tyre.profile}`)}|${tyre.width}/${tyre.height} R${tyre.rim}`,
-  )
+  const name = variantOf(tyreKey(`${tyre.brand} ${tyre.profile}`))
+  return ratings().get(`${name}|${tyre.width}/${tyre.height} R${tyre.rim}`)
 }

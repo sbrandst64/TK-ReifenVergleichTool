@@ -88,6 +88,46 @@ describe('oeamtcRating (all ÖAMTC tyre tests 2018–2026, spec AC43)', () => {
     })
   })
 
+  it('ÖAMTC itself writes a tyre two ways: both spellings reach the shop name', () => {
+    const prime3 = { brand: 'HANKOOK', profile: 'K 125 Ventus Prime 3' }
+    // ÖAMTC: "Hankook ventus PRime 3 K125" in 2021, "Hankook Ventus Prime 3" in 2020
+    expect(oeamtcRating({ ...prime3, width: 205, height: 55, rim: 16 })).toMatchObject({
+      grade: '2,7',
+      test: 'Sommer 2021',
+    })
+    expect(oeamtcRating({ ...prime3, width: 235, height: 55, rim: 17 })).toMatchObject({
+      grade: '2,7',
+      test: 'Sommer 2020',
+    })
+  })
+
+  it('knows that the shops write "General" where ÖAMTC writes "General Tire"', () => {
+    expect(
+      oeamtcRating({
+        brand: 'GENERAL',
+        profile: 'Altimax Winter 3',
+        width: 195,
+        height: 65,
+        rim: 15,
+      }),
+    ).toMatchObject({ grade: '3,5', test: 'Winter 2021' })
+  })
+
+  it('special versions for car makers or run-flat are not the tested tyre', () => {
+    expect(
+      oeamtcRating({
+        brand: 'PIRELLI',
+        profile: 'W Sottozero 3 AO',
+        width: 225,
+        height: 50,
+        rim: 17,
+      }),
+    ).toBeUndefined()
+    expect(
+      oeamtcRating({ brand: 'PIRELLI', profile: 'W Sottozero 3', width: 225, height: 50, rim: 17 }),
+    ).toMatchObject({ grade: '3,3', test: 'Winter 2021' })
+  })
+
   it('a name variant still needs the tested size', () => {
     expect(
       oeamtcRating({

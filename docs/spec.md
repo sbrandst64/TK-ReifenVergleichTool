@@ -287,7 +287,9 @@ In Klammern steht die Phase. „Fixture-Daten“ heißt: anonymisierte, aufgezei
   „ÖAMTC-Test Winter 2026: Gesamtnote 2,2 (gut)“ mit Link auf die ÖAMTC-Seite dieses Reifens.
   Wurde er in derselben Größe mehrmals getestet, gilt der neueste Test. Die Zuordnung ist exakt
   (ohne KI; Groß-/Kleinschreibung, Leer- und Sonderzeichen zählen nicht, „Nokian Tyres“ =
-  „Nokian“). Andere Reifen zeigen nichts. Die Werte stehen nur auf dem Bildschirm, nicht im
+  „Nokian“, hochgestellte Ziffern zählen als Ziffern). Abweichende Schreibweisen der Shops
+  (z. B. Göggel „HANKOOK K 435 KINERGY eco 2“ = „Hankook Kinergy Eco 2“) stehen in einer von
+  Hand geprüften Liste `NAME_VARIANTS`; die Größe muss trotzdem passen. Andere Reifen zeigen nichts. Die Werte stehen nur auf dem Bildschirm, nicht im
   Angebots-PDF, bis ÖAMTC die Nutzung schriftlich erlaubt. Die Daten erzeugt
   `npm run oeamtc:import` aus oeamtc.at; die App selbst ruft ÖAMTC nie auf.
 - AC29 (P2, manuell) – Der Filterbereich hat einen eigenen, hellen Hintergrund und ist so klar von der
