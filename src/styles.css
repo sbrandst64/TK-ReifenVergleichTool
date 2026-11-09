@@ -88,6 +88,13 @@ body {
   white-space: nowrap;
 }
 
+/* ÖAMTC winter test grade under the tyre name (AC43); on screen only, never in the PDF */
+.oeamtc {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
 /* shop logos as links to the shops, right next to the settings button (AC42) */
 .shoplinks {
   display: flex;

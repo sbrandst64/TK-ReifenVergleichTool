@@ -1,5 +1,6 @@
 // One block per tyre, one row per shop offer (spec 3.3).
 // Row layout: phone = shop + price on line 1, delivery/stock on line 2; wide = one line.
+import { OEAMTC_TEST_URL, oeamtcRating } from '../oeamtc-ratings.ts'
 import type { OfferGroup } from '../../supabase/functions/_shared/matching.ts'
 import type { ShopId, TireOffer } from '../../supabase/functions/_shared/types.ts'
 import { formatEuro, SHOP_LABEL } from '../messages.ts'
@@ -45,6 +46,7 @@ function TyreGroup({ group, selected, onToggle }: { group: OfferGroup } & Select
   const first = group.offers[0]
   const compare = group.offers.length > 1
   const season = seasonLabel(group.offers.find((o) => o.season)?.season ?? null)
+  const rating = oeamtcRating(first)
   return (
     <article className="tyre">
       <h2 className="tyre__title">
@@ -55,6 +57,14 @@ function TyreGroup({ group, selected, onToggle }: { group: OfferGroup } & Select
         {first.speedIndex}
         {season && ` · ${season}`}
       </p>
+      {rating && (
+        <p className="oeamtc">
+          ÖAMTC-Test Winter 2026: Gesamtnote <strong>{rating.grade}</strong> ({rating.verdict}) ·{' '}
+          <a href={OEAMTC_TEST_URL} target="_blank" rel="noopener noreferrer">
+            ÖAMTC-Testseite
+          </a>
+        </p>
+      )}
       <ul className="offers">
         {group.offers.map((o) => {
           const best = compare && o.cheapest
