@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { OEAMTC_RESULTS, OEAMTC_TESTS } from './oeamtc-data.ts'
-import { oeamtcRating } from './oeamtc-ratings.ts'
+import { NAME_VARIANTS, oeamtcRating, tyreKey } from './oeamtc-ratings.ts'
 
 const BASE = 'https://www.oeamtc.at/tests/reifentest/'
 const tyre = (over: Partial<Parameters<typeof oeamtcRating>[0]> = {}) => ({
@@ -71,6 +71,35 @@ describe('oeamtcRating (all ÖAMTC tyre tests 2018–2026, spec AC43)', () => {
     ).toMatchObject({ grade: '3,8', test: 'Winter 2026' })
   })
 
+  it('reads superscript digits as digits ("Kinergy 4S²" = "Kinergy 4S2")', () => {
+    expect(
+      oeamtcRating({ brand: 'HANKOOK', profile: 'Kinergy 4S2', width: 205, height: 55, rim: 16 }),
+    ).toMatchObject({ grade: '2,7', test: 'Ganzjahr 2024' })
+  })
+
+  it.each([
+    ['HANKOOK', 'K 435 KINERGY eco 2', '3,4', 'Sommer 2019'],
+    ['HANKOOK', 'Kinergy 4S2 ( H 750 )', '3,0', 'Ganzjahr 2026'],
+    ['NEXEN', 'WG SNOW G 3 WH21', '3,3', 'Winter 2022'],
+  ])('knows the shop name "%s %s" (185/65 R15)', (brand, profile, grade, test) => {
+    expect(oeamtcRating({ brand, profile, width: 185, height: 65, rim: 15 })).toMatchObject({
+      grade,
+      test,
+    })
+  })
+
+  it('a name variant still needs the tested size', () => {
+    expect(
+      oeamtcRating({
+        brand: 'NEXEN',
+        profile: 'WG SNOW G 3 WH21',
+        width: 205,
+        height: 55,
+        rim: 16,
+      }),
+    ).toBeUndefined()
+  })
+
   it('gives no rating for a tested model in an untested size', () => {
     expect(oeamtcRating(tyre({ width: 195, height: 55, rim: 20 }))).toBeUndefined()
   })
@@ -78,6 +107,22 @@ describe('oeamtcRating (all ÖAMTC tyre tests 2018–2026, spec AC43)', () => {
   it('gives no rating for a model that was not tested', () => {
     expect(oeamtcRating(tyre({ profile: 'Alpin 6' }))).toBeUndefined()
     expect(oeamtcRating(tyre({ brand: 'MICHELIN' }))).toBeUndefined()
+  })
+})
+
+describe('NAME_VARIANTS', () => {
+  const tested = new Set(OEAMTC_RESULTS.map((r) => tyreKey(r[1])))
+
+  it('every variant points to a tyre that ÖAMTC tested', () => {
+    for (const [shopName, oeamtcName] of NAME_VARIANTS) {
+      expect(tested.has(tyreKey(oeamtcName)), `${shopName} → ${oeamtcName}`).toBe(true)
+    }
+  })
+
+  it('a variant is only needed when the names really differ', () => {
+    for (const [shopName, oeamtcName] of NAME_VARIANTS) {
+      expect(tyreKey(shopName), shopName).not.toBe(tyreKey(oeamtcName))
+    }
   })
 })
 
