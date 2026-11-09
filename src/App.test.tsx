@@ -359,6 +359,7 @@ describe('App', () => {
     // the selection has its own area next to the results (PC: right screen edge), not in the filters
     const bar = () => screen.getByRole('region', { name: 'Auswahl' })
     const actions = () => within(bar()).getByRole('group', { name: 'Aktionen zur Auswahl' })
+    const row = (name: RegExp) => within(bar()).getByText(name).closest('li') as HTMLElement
 
     it('AC31: the selection has its own area outside the filter panel, with both buttons', async () => {
       const { user } = await setup()
@@ -370,6 +371,16 @@ describe('App', () => {
       expect(screen.getByRole('region', { name: 'Suchergebnisse' })).not.toContainElement(bar())
       expect(within(bar()).getByRole('button', { name: 'Auswahl aufheben' })).toBeInTheDocument()
       expect(within(actions()).getByRole('button', { name: 'Angebot als PDF' })).toBeInTheDocument()
+    })
+
+    it('AC31: every selected tyre shows the logo of its shop', async () => {
+      const { user } = await setup()
+      await user.click(
+        await screen.findByRole('checkbox', { name: 'PIRELLI W Sotozero 3 (Göggel) auswählen' }),
+      )
+      const logo = within(row(/PIRELLI W Sotozero 3/)).getByRole('img', { name: 'Göggel' })
+      expect(logo.getAttribute('src')).toMatch(/logos\/goeggel\.png$/)
+      expect(row(/PIRELLI W Sotozero 3/)).toHaveTextContent('2 Stk')
     })
 
     it('AC31: a tick keeps the tyre with its quantity, also after the next search', async () => {
@@ -389,8 +400,8 @@ describe('App', () => {
         await screen.findByRole('checkbox', { name: 'HANKOOK IW 01 (Weichberger) auswählen' }),
       )
       expect(bar()).toHaveTextContent('2 Reifen ausgewählt')
-      expect(within(bar()).getByText(/PIRELLI W Sotozero 3/)).toHaveTextContent('2 Stk')
-      expect(within(bar()).getByText(/HANKOOK IW 01/)).toHaveTextContent('4 Stk')
+      expect(row(/PIRELLI W Sotozero 3/)).toHaveTextContent('2 Stk')
+      expect(row(/HANKOOK IW 01/)).toHaveTextContent('4 Stk')
     })
 
     it('AC31: a tick takes the quantity marked in the filter right now, even without a new search', async () => {
@@ -403,11 +414,11 @@ describe('App', () => {
       await user.click(
         screen.getByRole('checkbox', { name: 'PIRELLI W Sotozero 3 (Göggel) auswählen' }),
       )
-      expect(within(bar()).getByText(/PIRELLI W Sotozero 3/)).toHaveTextContent('6 Stk')
+      expect(row(/PIRELLI W Sotozero 3/)).toHaveTextContent('6 Stk')
 
       // changing the filter later leaves tyres already chosen as they are
       await user.click(quantity('8'))
-      expect(within(bar()).getByText(/PIRELLI W Sotozero 3/)).toHaveTextContent('6 Stk')
+      expect(row(/PIRELLI W Sotozero 3/)).toHaveTextContent('6 Stk')
     })
 
     it('AC31: single remove and "Auswahl aufheben"', async () => {
