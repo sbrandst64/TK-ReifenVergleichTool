@@ -19,6 +19,7 @@
   --panel-bg: #eaeff5;
   --panel-line: #d3dbe5;
   --sidebar: 340px;
+  --cart: 300px;
   /* shop badges, taken from the shop logos */
   --shop-weichberger: #005090;
   --shop-goeggel: #000000;
@@ -614,23 +615,35 @@ input:focus-visible {
   box-shadow: inset 0 0 0 1px var(--accent);
 }
 
-/* ---------- selected tyres in the left panel (AC31) ---------- */
+/* ---------- selected tyres: own area outside the filters (AC31) ---------- */
+/* phones, tablets, narrow PC: a block between filters and results; count and "Auswahl aufheben"
+   share the first line, the PDF action floats bottom right (see .flyout) */
 .selection {
-  margin: 4px 0 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--panel-line);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'count clear'
+    'list list';
+  align-items: center;
+  gap: 10px 12px;
+  margin: 12px 0 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius);
+  background: var(--panel-bg);
 }
 
-.selection__head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px 12px;
+.selection__count {
+  grid-area: count;
+}
+
+.selection__clear {
+  grid-area: clear;
 }
 
 .selection__list {
-  margin: 10px 0 0;
+  grid-area: list;
+  margin: 0;
   padding: 0;
   list-style: none;
   font-size: 0.875rem;
@@ -663,17 +676,7 @@ input:focus-visible {
   cursor: pointer;
 }
 
-/* phone/tablet: the folded panel sticks to the top, so only count + "Auswahl aufheben" stay */
-.panel[data-collapsed='true'] .selection {
-  margin: 0 0 8px;
-  padding-top: 8px;
-}
-
-.panel[data-collapsed='true'] .selection__list {
-  display: none;
-}
-
-/* ---------- actions on the selection: floating bottom right ---------- */
+/* ---------- actions on the selection: floating bottom right (wide PC: in the column) ---------- */
 .flyout {
   position: fixed;
   right: max(16px, env(safe-area-inset-right));
@@ -825,13 +828,9 @@ input:focus-visible {
     padding-top: calc(var(--sidebar) * 238 / 566 + 14px);
   }
 
-  .panel[data-collapsed='true'] .selection {
-    margin: 4px 0 12px;
-    padding-top: 12px;
-  }
-
-  .panel[data-collapsed='true'] .selection__list {
-    display: block;
+  /* the .app shorthand above resets the room for the floating button */
+  .app--selection {
+    padding-bottom: 96px;
   }
 
   .flyout {
@@ -845,6 +844,75 @@ input:focus-visible {
 
   .status {
     padding-top: 8px;
+  }
+}
+
+/* wide PC: the selection is a column anchored to the right screen edge; the tyre list stays in
+   the middle and only gets narrower from the right, so ticked rows do not move */
+@media (min-width: 1280px) {
+  .app--selection {
+    padding-right: calc(var(--cart) + 32px);
+    padding-bottom: 32px;
+  }
+
+  .selection {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: var(--z-sticky);
+    width: var(--cart);
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      'count'
+      'list'
+      'clear'
+      'actions';
+    align-items: stretch;
+    gap: 12px;
+    margin: 0;
+    padding: 18px 20px 20px;
+    border: 0;
+    border-left: 1px solid var(--panel-line);
+    border-radius: 0;
+    animation: selection-in 220ms cubic-bezier(0.25, 1, 0.5, 1);
+  }
+
+  .selection__list {
+    overflow-y: auto;
+  }
+
+  .flyout {
+    position: static;
+    grid-area: actions;
+    align-items: stretch;
+    max-width: none;
+    animation: none;
+  }
+
+  .flyout__error {
+    box-shadow: none;
+  }
+}
+
+/* with the selection column the header is narrower: shop logos on their own line a bit longer */
+@media (min-width: 1280px) and (max-width: 1399px) {
+  .app--selection .topbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .app--selection .shoplinks {
+    grid-row: 2;
+    grid-column: 1 / -1;
+    margin-left: 0;
+  }
+}
+
+@keyframes selection-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
   }
 }
 
@@ -868,7 +936,8 @@ input:focus-visible {
   .spinner {
     animation-duration: 2.4s;
   }
-  .flyout {
+  .flyout,
+  .selection {
     animation: none;
   }
 }

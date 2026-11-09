@@ -48,6 +48,7 @@ Stand 2026-11-06, Branch `feat/erster-build`.
 | 26 | Logo „TK Kopf GmbH“ links oben vor dem Titel (PC: oben im linken Panel, Handy: in der Kopfzeile). RED: 5f17afc | `src/App.test.tsx` | component |
 | 27 | Kopf zeigt die Logos von Weichberger und Göggel als Links; Klick öffnet den Shop in neuem Tab (`noopener noreferrer`), die App bleibt offen (AC42). RED: 24521a1 | `src/App.test.tsx` | component |
 | 28 | ÖAMTC-Gesamtnote und Urteil unter dem Reifennamen, wenn Marke, Modell und Größe in der Winter-2026-Tabelle stehen; sonst nichts. Nur Anzeige, nicht im PDF (AC43). RED: 58d0532 | `src/oeamtc-ratings.test.ts`, `src/App.test.tsx` | `src/App.test.tsx` | component |
+| 29 | Auswahl hat einen eigenen Bereich außerhalb von Filter und Reifenliste, mit Liste, „Auswahl aufheben“ und „Angebot als PDF“ (AC31, Wunsch 2026-11-09; ersetzt Zeile 24). PC ab 1280 px: Spalte am rechten Rand, im Browser geprüft bei 1440/1400/1280/1100/375 px. RED: 68036c5 | `src/App.test.tsx` | component |
 | 14 | Filterbereich farblich abgesetzt, Logos lesbar, Tags springen nicht (AC29, manuell) | Browser bei 375, 768, 1024, 1280 px | manuell |
 
 ## Zusätzlich manuell verifiziert (nicht automatisiert)

@@ -20,7 +20,7 @@ import {
 import { CodePrompt } from './components/CodePrompt.tsx'
 import { offerKey, ResultList } from './components/ResultList.tsx'
 import { SearchForm } from './components/SearchForm.tsx'
-import { SelectionActions, SelectionList } from './components/Selection.tsx'
+import { Selection } from './components/Selection.tsx'
 import { SettingsDialog } from './components/SettingsDialog.tsx'
 import { errorMessage, SHOP_LABEL, SHOP_URL } from './messages.ts'
 import { DEFAULTS, SEASON_OPTIONS } from './options.ts'
@@ -272,12 +272,14 @@ export function App({
               </div>
             )}
             <SearchForm onSearch={runSearch} onQuantityChange={setFilterQuantity} />
-            <SelectionList
-              items={selection}
-              onRemove={(item) => toggle(item.offer)}
-              onClear={() => setSelection([])}
-            />
           </aside>
+          {/* own area for the ticked tyres: wide PC right screen edge, otherwise above the list */}
+          <Selection
+            items={selection}
+            onRemove={(item) => toggle(item.offer)}
+            onClear={() => setSelection([])}
+            onOfferPdf={() => makeOfferPdf(selection, pdfTexts)}
+          />
           <section className="results-col" aria-label="Suchergebnisse">
             <div className="status" aria-live="polite">
               {SHOPS.map((shop) => {
@@ -297,10 +299,6 @@ export function App({
             </div>
             <ResultList groups={groups} selected={selectedKeys} onToggle={toggle} />
           </section>
-          <SelectionActions
-            count={selection.length}
-            onOfferPdf={() => makeOfferPdf(selection, pdfTexts)}
-          />
         </div>
       )}
     </main>
