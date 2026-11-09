@@ -24,8 +24,8 @@ Testsuche überall: 205/55 R16.
 | Weitere Felder | Bezeichnung (Marke-Kürzel, Dimension, Profil, LI/SI, TL), Hersteller, Art.-Nr., EU-Label, Bestand Filiale / Zentrallager / Nebenlager (2–3 Tage), Netto-EK, **EVP exkl./inkl.** | Dimension+SI+TL, LI/SI, Hersteller, Profil, Saison, EU-Label, Verfügbarkeit (Ampel, Lieferzeit, Stück), EK-Preis, Ertrag, **VK o./m. MwSt**, KB-Preis; Detail: EAN, Hersteller-Art.-Nr. |
 | Endkundenpreis | EVP = Preisempfehlung von Weichberger | VK = vermutlich aus der eigenen „Kalkulation“ im Göggel-Konto (VK − EK = „Ertrag“); zusätzlich Sortierung nach „EVB-Preis“. **Zu klären** |
 | Versandkosten | Nicht im Shop angegeben. AGB: Transport trägt der Käufer, außer freie Zustellung ist schriftlich vereinbart → **individuelle Vereinbarung, zu klären** | Laut „Lieferbedingungen“ im Shop: PKW-Reifen Einzelstück 6,50 €/Reifen, **ab 2 Reifen frei Haus**. Ob das auch für Lieferungen nach Österreich gilt: zu klären |
-| Warenkorb-Request | aus JS: `POST /115/b/JsonInsertIntoBasket` (`itemID`, `quantity`, …) → JSON. **Nicht getestet** (Account nur lesend) | aus HTML: Formular-POST `scart.php?site=write&s=1&sess-shop=<id>` mit `anz<i>`/`key<i>`. **Nicht getestet** (Account nur lesend) |
-| Warenkorb am Account gespeichert? | unbekannt | wahrscheinlich ja (Warenkorb-Popup nach Login aktualisiert alte Positionen). Nicht bestätigt |
+| Warenkorb-Request | **Aufgezeichnet 2026-11-09** (HAR in `recon/`, Account kann Warenkorb): `POST /100/b/JsonInsertIntoBasket`, Formular `itemID=<Art.-ID>&quantity=<Stk>&imagepath&description&info` → JSON `{"success":true,"UserNotification":{"Title":"Artikel eingefügt",…}}`. `itemID` = unsere `shopArticleId` (gleiches Formularfeld der Trefferliste). Im Test war `quantity` leer (Feld nicht ausgefüllt) → Stückzahl-Feld muss gesetzt werden. Danach `GET /100/b/RefreshBasket` (nur Kopfzeile) | **Aufgezeichnet 2026-11-09**: Formular-POST `scart.php?site=write&s=1&sess-shop=<id>` mit **allen** 20 Zeilen der aktuellen Trefferseite (`anz<i>`=Stück oder leer, `key<i>`) plus `vkpreis=vkpreis_opt&opt7=` → 302 auf `scart.php?site=show` (Warenkorbseite mit Positionen, Summe netto). **`key<i>` ist nicht die Göggel-Nr.** (`data-int`), sondern eine kleine Zeilennummer der Trefferliste in derselben Sitzung (z. B. 919) → der Adapter muss erst suchen und den `key` aus der Zeile mit der passenden `data-int` lesen |
+| Warenkorb am Account gespeichert? | unbekannt (Ab-/Anmelde-Test steht aus) | wahrscheinlich ja (Warenkorb-Popup nach Login aktualisiert alte Positionen). Ab-/Anmelde-Test steht aus |
 | Automatisches Bestellen | Kontoeinstellung „Automatische Bestellung“ mit Bestellzeiten pro Wochentag existiert. **Aktuell aus**, keine Zeiten hinterlegt | nichts gefunden |
 | AGB (öffentlich) | keine Klausel zu automatisiertem Zugriff | keine Klausel zu automatisiertem Zugriff; Shop-Preise = Netto-EK zzgl. Versand |
 
@@ -101,7 +101,7 @@ Ein Playwright-Worker ist nicht nötig.
 
 - Versandregel Weichberger (Onkel: „ab 4 Reifen frei“?) und ob Göggels „ab 2 frei Haus“ auch nach Österreich gilt.
 - Bestehendes Supabase-Projekt der Werkstatt mitnutzen oder neues Projekt?
-- Warenkorb-Requests und Persistenz: braucht pro Shop einen Login mit Warenkorb-Recht
-  (Göggel vorab über den öffentlichen Demo-Shop prüfbar).
+- Warenkorb: Requests aufgezeichnet (siehe Tabelle). Offen: bleibt der Warenkorb nach Ab-/Anmelden
+  erhalten (Gate aus Spec 3.4)? Weichberger-Seite „Automatische Bestellung“ noch nicht aufgezeichnet.
 - Serverseitiges Session-Timeout bei Weichberger.
 - Ob die Shops Requests aus Rechenzentrums-IPs (Supabase Edge) blocken → erster Spike in Phase 1.
