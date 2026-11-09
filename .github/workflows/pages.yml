@@ -1,0 +1,75 @@
+# Checks every push and pull request; on main it also builds the frontend and publishes it on
+# GitHub Pages. The backend (Supabase Edge Functions) is deployed separately, see README.
+#
+# Needed once in the GitHub repo:
+# - Settings → Pages → Source: "GitHub Actions"
+# - Settings → Secrets and variables → Actions → Variables: VITE_API_BASE =
+#   https://<projekt>.supabase.co/functions/v1   (an address, not a secret)
+name: Prüfen und veröffentlichen
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm test
+      - run: npm run check:deno
+
+  build:
+    needs: check
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      VITE_API_BASE: ${{ vars.VITE_API_BASE }}
+    steps:
+      - name: Supabase-Adresse gesetzt?
+        run: |
+          if [ -z "$VITE_API_BASE" ]; then
+            echo "::error::Repo-Variable VITE_API_BASE fehlt (Settings → Secrets and variables → Actions → Variables)."
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

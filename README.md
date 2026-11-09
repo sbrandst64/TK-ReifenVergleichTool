@@ -7,13 +7,16 @@ Endkundenpreis, führt gleiche Reifen zusammen und markiert das günstigste Ange
   Testnachweis: [docs/testing/erster-build.tdd.md](docs/testing/erster-build.tdd.md)
 - Kein KI-Einsatz zur Laufzeit, kein automatisches Bestellen, Zugangsdaten nur serverseitig.
 
-| Ordner                        | Inhalt                                                             |
-| ----------------------------- | ------------------------------------------------------------------ |
-| `src/`                        | Oberfläche (React + Vite + TypeScript)                             |
-| `supabase/functions/_shared/` | Shop-Adapter, Preisberechnung, Matching, Handler (laufzeitneutral) |
-| `supabase/functions/search/`  | Edge Function (Deno)                                               |
-| `scripts/`                    | lokaler Dev-Server, Fixture-Anonymisierung                         |
-| `test/`                       | Backend-Tests und anonymisierte Fixtures                           |
+| Ordner                         | Inhalt                                                             |
+| ------------------------------ | ------------------------------------------------------------------ |
+| `src/`                         | Oberfläche (React + Vite + TypeScript)                             |
+| `supabase/functions/_shared/`  | Shop-Adapter, Preisberechnung, Matching, Handler (laufzeitneutral) |
+| `supabase/functions/search/`   | Edge Function Suche (Deno)                                         |
+| `supabase/functions/cart/`     | Edge Function Warenkorb (Deno), bestellt nie                       |
+| `supabase/functions/settings/` | Edge Function PDF-Texte (Deno)                                     |
+| `.github/workflows/`           | Prüfen bei jedem Push, Veröffentlichen auf GitHub Pages von `main` |
+| `scripts/`                     | lokaler Dev-Server, Fixture-Anonymisierung                         |
+| `test/`                        | Backend-Tests und anonymisierte Fixtures                           |
 
 ## Lokal starten
 
@@ -62,6 +65,78 @@ npm run check:deno
 ```bash
 npm run build
 ```
+
+## Live schalten
+
+Zwei Teile: der **Server** (Supabase Edge Functions, meldet sich bei den Shops an) und die
+**Oberfläche** (GitHub Pages). Zugangsdaten gibt nur der Mensch ein, nie in den Chat, nie ins Repo.
+
+### 1. Supabase (einmalig)
+
+1. Auf supabase.com ein Projekt anlegen (Region Europa). Die **Project Reference** steht in der
+   Adresse, z. B. `https://abcdefgh.supabase.co` → `abcdefgh`.
+2. Anmelden und das Repo mit dem Projekt verbinden (fragt nach der Project Reference und dem
+   Datenbank-Passwort):
+
+```bash
+npm run supabase:login
+```
+
+```bash
+npm run supabase:link
+```
+
+3. Tabelle für die PDF-Texte anlegen (`supabase/migrations/`):
+
+```bash
+npm run deploy:db
+```
+
+4. Secrets: `supabase/functions/.env.example` nach `supabase/functions/.env.production` kopieren
+   (von Git ausgeschlossen) und ausfüllen:
+   - `WERKSTATT_CODE`: ein **neuer, langer** Code (nicht der lokale)
+   - die vier Shop-Zugangsdaten
+   - `ALLOWED_ORIGINS`: nur die Adresse der Seite ohne Pfad, z. B. `https://<name>.github.io`
+   - Zeilen ohne Wert löschen (z. B. `SHIPPING_WEICHBERGER=`, solange die Regel offen ist)
+
+```bash
+npm run deploy:secrets
+```
+
+5. Die drei Funktionen hochladen (`supabase/config.toml` schaltet die Supabase-Anmeldung ab, der
+   Werkstatt-Code schützt sie):
+
+```bash
+npm run deploy:functions
+```
+
+6. Probe ohne Shop-Kontakt: Mit falschem Code muss `401` kommen.
+
+```bash
+curl -i -X POST https://<projekt>.supabase.co/functions/v1/search -H "content-type: application/json" -H "x-werkstatt-code: falsch" -d "{}"
+```
+
+Danach eine echte Suche in der Oberfläche. **Offen:** Ob die Shops Anfragen aus einem Supabase-
+Rechenzentrum zulassen, ist noch nicht geprüft (Spec §7, Spike). Zeigt die UI „Shop blockiert
+Anfragen“, liegt es daran.
+
+### 2. GitHub (einmalig)
+
+1. Repo anlegen. **Privat** empfohlen: Im Code stehen Aufschlag, Shops, ÖAMTC-Daten und das
+   Werkstatt-Logo. GitHub Pages für private Repos braucht GitHub Pro; öffentlich ist es gratis.
+2. Den Stand nach `main` bringen und hochladen (z. B. GitHub Desktop → „Publish repository“).
+3. Settings → **Pages** → Source: **GitHub Actions**.
+4. Settings → **Secrets and variables → Actions → Variables** → `VITE_API_BASE` =
+   `https://<projekt>.supabase.co/functions/v1`.
+5. Jeder Push auf `main` prüft (Typen, Lint, Format, Tests, Deno) und veröffentlicht die Seite unter
+   `https://<name>.github.io/<repo>/`. Status unter **Actions**.
+
+### 3. Danach
+
+- Seite öffnen, neuen Werkstatt-Code eingeben, suchen; Warenkorb einmal selbst testen.
+- Beim Onkel als Lesezeichen bzw. auf dem Handy „Zum Startbildschirm“.
+- Code-Änderungen: Push auf `main` (Oberfläche) bzw. `npm run deploy:functions` (Server).
+  Neue ÖAMTC-Tests: `npm run oeamtc:import`, Tests laufen lassen, committen.
 
 ## Konfiguration (Supabase-Secrets)
 

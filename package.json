@@ -16,7 +16,12 @@
     "format:check": "prettier --check .",
     "check:deno": "deno check --config supabase/functions/search/deno.json supabase/functions/search/index.ts && deno check --config supabase/functions/settings/deno.json supabase/functions/settings/index.ts && deno check --config supabase/functions/cart/deno.json supabase/functions/cart/index.ts",
     "fixtures": "node scripts/anonymize-fixtures.ts",
-    "oeamtc:import": "node scripts/oeamtc-import.ts"
+    "oeamtc:import": "node scripts/oeamtc-import.ts",
+    "supabase:login": "npx --yes supabase@2.122.0 login",
+    "supabase:link": "npx --yes supabase@2.122.0 link",
+    "deploy:db": "npx --yes supabase@2.122.0 db push",
+    "deploy:secrets": "npx --yes supabase@2.122.0 secrets set --env-file supabase/functions/.env.production",
+    "deploy:functions": "npx --yes supabase@2.122.0 functions deploy search settings cart"
   },
   "keywords": [],
   "author": "",
