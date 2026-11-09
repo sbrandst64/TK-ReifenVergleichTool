@@ -15,7 +15,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check:deno": "deno check --config supabase/functions/search/deno.json supabase/functions/search/index.ts && deno check --config supabase/functions/settings/deno.json supabase/functions/settings/index.ts && deno check --config supabase/functions/cart/deno.json supabase/functions/cart/index.ts",
-    "fixtures": "node scripts/anonymize-fixtures.ts"
+    "fixtures": "node scripts/anonymize-fixtures.ts",
+    "oeamtc:import": "node scripts/oeamtc-import.ts"
   },
   "keywords": [],
   "author": "",

@@ -1,6 +1,6 @@
 // One block per tyre, one row per shop offer (spec 3.3).
 // Row layout: phone = shop + price on line 1, delivery/stock on line 2; wide = one line.
-import { OEAMTC_TEST_URL, oeamtcRating } from '../oeamtc-ratings.ts'
+import { oeamtcRating } from '../oeamtc-ratings.ts'
 import type { OfferGroup } from '../../supabase/functions/_shared/matching.ts'
 import type { ShopId, TireOffer } from '../../supabase/functions/_shared/types.ts'
 import { formatEuro, SHOP_LABEL } from '../messages.ts'
@@ -59,8 +59,8 @@ function TyreGroup({ group, selected, onToggle }: { group: OfferGroup } & Select
       </p>
       {rating && (
         <p className="oeamtc">
-          ÖAMTC-Test Winter 2026: Gesamtnote <strong>{rating.grade}</strong> ({rating.verdict}) ·{' '}
-          <a href={OEAMTC_TEST_URL} target="_blank" rel="noopener noreferrer">
+          ÖAMTC-Test {rating.test}: Gesamtnote <strong>{rating.grade}</strong> ({rating.verdict}) ·{' '}
+          <a href={rating.url} target="_blank" rel="noopener noreferrer">
             ÖAMTC-Testseite
           </a>
         </p>

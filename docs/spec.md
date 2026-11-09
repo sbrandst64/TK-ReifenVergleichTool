@@ -281,11 +281,15 @@ In Klammern steht die Phase. „Fixture-Daten“ heißt: anonymisierte, aufgezei
 - AC42 (P2, Wunsch 2026-11-09) – Oben im Kopf stehen die Logos von Weichberger und Göggel als Links.
   Ein Klick öffnet den jeweiligen Shop (`https://b2b.weichberger.at/`, `https://goeggel-shop.com/`)
   in einem neuen Tab; die App bleibt offen. Die App meldet dabei niemanden an.
-- AC43 (P2, Wunsch 2026-11-09) – Ist ein Reifen im ÖAMTC-Winterreifentest 2026 getestet und seine
-  Größe (185/65 R15 oder 225/50 R17) stimmt überein, zeigt die Ergebnisliste unter dem Reifen die
-  ÖAMTC-Gesamtnote und das Urteil (z. B. „Gesamtnote 2,2 (gut)“) mit Link zur ÖAMTC-Testseite. Die
-  Zuordnung ist exakt (Marke, Modell, Größe, ohne KI). Andere Reifen zeigen nichts. Die Werte
-  stehen nur auf dem Bildschirm, nicht im Angebots-PDF, bis ÖAMTC die Nutzung schriftlich erlaubt.
+- AC43 (P2, Wunsch 2026-11-09, erweitert am selben Tag) – Ist ein Reifen in einem ÖAMTC-Pkw-
+  Reifentest seit 2018 getestet (Sommer, Winter, Ganzjahr, All-Terrain; 20 Tests, 488 Ergebnisse)
+  und stimmen Marke + Modell und Größe überein, zeigt die Ergebnisliste unter dem Reifen z. B.
+  „ÖAMTC-Test Winter 2026: Gesamtnote 2,2 (gut)“ mit Link auf die ÖAMTC-Seite dieses Reifens.
+  Wurde er in derselben Größe mehrmals getestet, gilt der neueste Test. Die Zuordnung ist exakt
+  (ohne KI; Groß-/Kleinschreibung, Leer- und Sonderzeichen zählen nicht, „Nokian Tyres“ =
+  „Nokian“). Andere Reifen zeigen nichts. Die Werte stehen nur auf dem Bildschirm, nicht im
+  Angebots-PDF, bis ÖAMTC die Nutzung schriftlich erlaubt. Die Daten erzeugt
+  `npm run oeamtc:import` aus oeamtc.at; die App selbst ruft ÖAMTC nie auf.
 - AC29 (P2, manuell) – Der Filterbereich hat einen eigenen, hellen Hintergrund und ist so klar von der
   weißen Reifenliste getrennt. Am PC (ab 1024 px) ist er fest am linken Bildschirmrand verankert,
   in voller Höhe, und die Reifenliste nutzt die gesamte restliche Breite des Browsers.

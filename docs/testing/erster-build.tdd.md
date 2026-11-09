@@ -55,6 +55,7 @@ Stand 2026-11-06, Branch `feat/erster-build`.
 | 33 | Freigabeliste: Checkout, Bestellschritt, Bestellungen, Einstellungen ändern, Warenkorb leeren/löschen werden abgelehnt, bevor etwas an den Shop geht (AC21). RED: a533c3e | `test/backend/weichberger-cart.test.ts`, `test/backend/goeggel-cart.test.ts` | unit |
 | 34 | Dienst `cart`: 401 ohne Code, 400 bei ungültiger Anfrage (u. a. doppelter Artikel, Stückzahl außerhalb 1–20), ein Ergebnis je Reifen, Shop-Fehler ohne Details, Timeout (AC25). RED: a533c3e | `test/backend/cart-handler.test.ts` | integration |
 | 35 | „In den Warenkorb“: ein Aufruf je Shop mit den Stückzahlen, „Im Warenkorb“ oder Fehler je Reifen, Shop-Fehler von Weichberger hindert Göggel nicht, zweiter Klick legt nichts doppelt ab (AC18–AC20 in der UI). RED: 792551f | `src/App.test.tsx`, `src/api.test.ts` | component |
+| 36 | ÖAMTC: alle 20 Pkw-Reifentests seit 2018 (488 Ergebnisse) mit Test, Größe, Note und Link auf die Reifenseite; neuester Test gewinnt; „Nokian Tyres“ = „Nokian“; Daten geprüft (Note = Reifenseite, Urteil passt zur Notengrenze, Größe auf der Testseite genannt). Live: 205/55 R16 6 von 40, 185/65 R15 16 von 35, 225/40 R18 8 von 40, 225/50 R17 13 von 40 Angeboten mit Note (AC43). RED: 6631d4a | `src/oeamtc-ratings.test.ts`, `src/App.test.tsx` | unit + component |
 | 14 | Filterbereich farblich abgesetzt, Logos lesbar, Tags springen nicht (AC29, manuell) | Browser bei 375, 768, 1024, 1280 px | manuell |
 
 ## Zusätzlich manuell verifiziert (nicht automatisiert)
