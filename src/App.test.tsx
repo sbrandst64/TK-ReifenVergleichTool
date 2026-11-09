@@ -3,8 +3,13 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { DEFAULT_PDF_TEXTS, type PdfTexts } from '../supabase/functions/_shared/pdf-texts.ts'
-import type { SearchResponse, ShopId, TireOffer } from '../supabase/functions/_shared/types.ts'
-import { UnauthorizedError, type SearchFn, type SettingsApi } from './api.ts'
+import type {
+  ApiErrorCode,
+  SearchResponse,
+  ShopId,
+  TireOffer,
+} from '../supabase/functions/_shared/types.ts'
+import { UnauthorizedError, type CartFn, type SearchFn, type SettingsApi } from './api.ts'
 import { App } from './App.tsx'
 
 // No network in tests: the default settings service answers with the template texts.
@@ -339,7 +344,14 @@ describe('App', () => {
     const pirelli = offer({ brand: 'PIRELLI', profile: 'W Sotozero 3', ean: '1' })
     const hankook = offer({ shop: 'weichberger', brand: 'HANKOOK', profile: 'IW 01', ean: '2' })
 
-    async function setup() {
+    // a cart service that takes everything
+    const takesAll: CartFn = async (shop, items) => ({
+      shop,
+      results: items.map((i) => ({ shopArticleId: i.shopArticleId, ok: true, error: null })),
+      error: null,
+    })
+
+    async function setup(cartImpl: CartFn = takesAll) {
       localStorage.setItem('werkstatt-code', 'abc')
       // first search with 2 pieces finds Pirelli at Göggel, the next one (4 pieces) Hankook at Weichberger
       const search = vi.fn<SearchFn>(async (shop, query) => {
@@ -347,13 +359,14 @@ describe('App', () => {
         return ok(shop, shop === 'weichberger' ? [hankook] : [])
       })
       const makeOfferPdf = vi.fn(async () => {})
+      const cart = vi.fn<CartFn>(cartImpl)
       const user = userEvent.setup()
-      render(<App search={search} makeOfferPdf={makeOfferPdf} />)
+      render(<App search={search} makeOfferPdf={makeOfferPdf} cart={cart} />)
       await user.click(
         within(screen.getByRole('group', { name: 'Stückzahl' })).getByRole('button', { name: '2' }),
       )
       await user.click(screen.getByRole('button', { name: 'Suchen' }))
-      return { user, search, makeOfferPdf }
+      return { user, search, makeOfferPdf, cart }
     }
 
     // the selection has its own area next to the results (PC: right screen edge), not in the filters
@@ -436,6 +449,141 @@ describe('App', () => {
       await user.click(box)
       await user.click(within(bar()).getByRole('button', { name: 'Auswahl aufheben' }))
       expect(box).not.toBeChecked()
+    })
+
+    /** Ticks the Pirelli at Göggel (2 pieces) and, after a second search, the Hankook at Weichberger (4). */
+    async function tickBoth(user: ReturnType<typeof userEvent.setup>) {
+      await user.click(
+        await screen.findByRole('checkbox', { name: 'PIRELLI W Sotozero 3 (Göggel) auswählen' }),
+      )
+      await user.click(screen.getByRole('button', { name: 'Ändern' }))
+      await user.click(
+        within(screen.getByRole('group', { name: 'Stückzahl' })).getByRole('button', { name: '4' }),
+      )
+      await user.click(screen.getByRole('button', { name: 'Suchen' }))
+      await user.click(
+        await screen.findByRole('checkbox', { name: 'HANKOOK IW 01 (Weichberger) auswählen' }),
+      )
+    }
+    const cartButton = () => within(actions()).getByRole('button', { name: 'In den Warenkorb' })
+
+    it('AC18: "In den Warenkorb" sends each shop its tyres with their quantities and shows the result per tyre', async () => {
+      const { user, cart, search } = await setup()
+      await tickBoth(user)
+      const searches = search.mock.calls.length
+      await user.click(cartButton())
+
+      expect(cart).toHaveBeenCalledTimes(2)
+      expect(cart).toHaveBeenCalledWith(
+        'goeggel',
+        [
+          {
+            shopArticleId: pirelli.shopArticleId,
+            quantity: 2,
+            width: 205,
+            height: 55,
+            rim: 16,
+            description: pirelli.description,
+          },
+        ],
+        'abc',
+      )
+      expect(cart).toHaveBeenCalledWith(
+        'weichberger',
+        [expect.objectContaining({ shopArticleId: hankook.shopArticleId, quantity: 4 })],
+        'abc',
+      )
+      expect(
+        await within(row(/PIRELLI W Sotozero 3/)).findByText('Im Warenkorb'),
+      ).toBeInTheDocument()
+      expect(within(row(/HANKOOK IW 01/)).getByText('Im Warenkorb')).toBeInTheDocument()
+      expect(search.mock.calls.length).toBe(searches)
+    })
+
+    it.each([
+      [
+        'AC19',
+        'AUTO_ORDER_ENABLED',
+        'Weichberger: Automatische Bestellung ist aktiv – Warenkorb wird nicht befüllt',
+      ],
+      [
+        'AC20',
+        'AUTO_ORDER_UNKNOWN',
+        'Weichberger: Bestell-Einstellung nicht lesbar – Warenkorb wird nicht befüllt',
+      ],
+    ] as [string, ApiErrorCode, string][])(
+      '%s: %s is shown at the Weichberger tyre, the Göggel tyre is still put into its cart',
+      async (_ac, code, text) => {
+        const { user } = await setup(async (shop, items) =>
+          shop === 'weichberger'
+            ? { shop, results: [], error: { code, message: 'x' } }
+            : takesAll(shop, items, ''),
+        )
+        await tickBoth(user)
+        await user.click(cartButton())
+        expect(await within(row(/HANKOOK IW 01/)).findByRole('alert')).toHaveTextContent(text)
+        expect(within(row(/PIRELLI W Sotozero 3/)).getByText('Im Warenkorb')).toBeInTheDocument()
+      },
+    )
+
+    it('a tyre the shop did not take shows its error; the next click only retries that one', async () => {
+      let attempt = 0
+      const { user, cart } = await setup(async (shop, items) => {
+        attempt++
+        return attempt === 1
+          ? {
+              shop,
+              results: items.map((i) => ({
+                shopArticleId: i.shopArticleId,
+                ok: false,
+                error: { code: 'ITEM_NOT_FOUND', message: 'x' },
+              })),
+              error: null,
+            }
+          : takesAll(shop, items, '')
+      })
+      await user.click(
+        await screen.findByRole('checkbox', { name: 'PIRELLI W Sotozero 3 (Göggel) auswählen' }),
+      )
+      await user.click(cartButton())
+      expect(await within(row(/PIRELLI W Sotozero 3/)).findByRole('alert')).toHaveTextContent(
+        'Göggel: Reifen im Shop nicht mehr gefunden – bitte neu suchen',
+      )
+
+      await user.click(cartButton())
+      expect(
+        await within(row(/PIRELLI W Sotozero 3/)).findByText('Im Warenkorb'),
+      ).toBeInTheDocument()
+      // everything is in the cart now: a further click must not put it there a second time
+      expect(cartButton()).toBeDisabled()
+      expect(cart).toHaveBeenCalledTimes(2)
+    })
+
+    it('a tyre that was removed and ticked again can be put into the cart again', async () => {
+      const { user } = await setup()
+      const box = await screen.findByRole('checkbox', {
+        name: 'PIRELLI W Sotozero 3 (Göggel) auswählen',
+      })
+      await user.click(box)
+      await user.click(cartButton())
+      await within(row(/PIRELLI W Sotozero 3/)).findByText('Im Warenkorb')
+      await user.click(box)
+      await user.click(box)
+      expect(within(row(/PIRELLI W Sotozero 3/)).queryByText('Im Warenkorb')).toBeNull()
+      expect(cartButton()).toBeEnabled()
+    })
+
+    it('a wrong workshop code is reported at the tyre', async () => {
+      const { user } = await setup(async () => {
+        throw new UnauthorizedError()
+      })
+      await user.click(
+        await screen.findByRole('checkbox', { name: 'PIRELLI W Sotozero 3 (Göggel) auswählen' }),
+      )
+      await user.click(cartButton())
+      expect(await within(row(/PIRELLI W Sotozero 3/)).findByRole('alert')).toHaveTextContent(
+        'Göggel: Werkstatt-Code ungültig',
+      )
     })
 
     it('AC35: "Angebot als PDF" hands the selection over without asking the search API', async () => {

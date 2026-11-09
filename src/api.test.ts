@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { SearchQuery } from '../supabase/functions/_shared/types.ts'
-import { createSearch, UnauthorizedError } from './api.ts'
+import type { CartItem, SearchQuery } from '../supabase/functions/_shared/types.ts'
+import { createCart, createSearch, UnauthorizedError } from './api.ts'
 import { errorMessage, formatEuro } from './messages.ts'
 
 const query: SearchQuery = { width: 205, height: 55, rim: 16, quantity: 4, seasons: [], brands: [] }
@@ -45,6 +45,45 @@ describe('createSearch', () => {
       (async () => new Response('<html>502</html>', { status: 502 })) as typeof fetch,
     )
     expect((await search('goeggel', query, 'abc')).error?.code).toBe('UPSTREAM_ERROR')
+  })
+})
+
+describe('createCart', () => {
+  const items: CartItem[] = [
+    { shopArticleId: '4711', quantity: 4, width: 205, height: 55, rim: 16, description: 'x' },
+  ]
+
+  it('posts shop and items with the workshop code', async () => {
+    const answer = {
+      shop: 'weichberger',
+      results: [{ shopArticleId: '4711', ok: true, error: null }],
+      error: null,
+    }
+    const fetchFn = vi.fn(async () => json(answer))
+    const cart = createCart('https://api.example/functions/v1/', fetchFn as unknown as typeof fetch)
+    expect(await cart('weichberger', items, 'abc')).toEqual(answer)
+    const [url, init] = fetchFn.mock.calls[0] as unknown as [string, RequestInit]
+    expect(url).toBe('https://api.example/functions/v1/cart')
+    expect(init.method).toBe('POST')
+    expect(new Headers(init.headers).get('x-werkstatt-code')).toBe('abc')
+    expect(JSON.parse(String(init.body))).toEqual({ shop: 'weichberger', items })
+  })
+
+  it('AC25: rejects with UnauthorizedError on 401', async () => {
+    const cart = createCart('x', (async () => json({}, 401)) as typeof fetch)
+    await expect(cart('goeggel', items, 'bad')).rejects.toBeInstanceOf(UnauthorizedError)
+  })
+
+  it.each([
+    ['network failures', async () => Promise.reject(new TypeError('offline'))],
+    ['non-JSON answers', async () => new Response('<html>502</html>', { status: 502 })],
+  ])('turns %s into an error for the whole shop', async (_what, respond) => {
+    const cart = createCart('x', respond as unknown as typeof fetch)
+    expect(await cart('goeggel', items, 'abc')).toEqual({
+      shop: 'goeggel',
+      results: [],
+      error: { code: 'UPSTREAM_ERROR', message: 'Server nicht erreichbar' },
+    })
   })
 })
 
