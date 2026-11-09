@@ -21,6 +21,7 @@ const BRAND_ALIASES: [string, string][] = [
   ['NOKIANTYRES', 'NOKIAN'],
   ['TOYOTIRES', 'TOYO'],
   ['COOPERTIRES', 'COOPER'],
+  ['GENERALTIRE', 'GENERAL'],
 ]
 
 /** Comparable key of "brand model": upper case, no spaces or symbols, known brand aliases.
@@ -33,16 +34,47 @@ export function tyreKey(name: string): string {
 }
 
 /**
- * Shop names that differ from ÖAMTC's spelling of the same tyre: [as a shop writes it, as ÖAMTC
- * writes it]. Collected by hand from searches of both shops in all tested sizes (2026-11-09);
- * only pairs that are clearly the same tyre. The size must still match.
+ * Names that mean the same tyre as an ÖAMTC name: [other spelling, ÖAMTC spelling]. Mostly how the
+ * shops write it, a few are ÖAMTC's own second spelling. Collected by hand on 2026-11-09 from a
+ * search of both shops for every tested brand in every tested size; only pairs that are clearly the
+ * same tyre. Not included on purpose: versions for car makers (MO, AO, *, VOL …), run-flat and
+ * Seal versions, and other generations (e.g. "Gen-2" vs "Gen-3"). The size must still match.
  */
 export const NAME_VARIANTS: [string, string][] = [
-  // Göggel adds Hankook's pattern codes
+  // Göggel puts Hankook's pattern codes into the name
   ['HANKOOK K 435 KINERGY eco 2', 'Hankook Kinergy Eco 2'],
   ['HANKOOK Kinergy 4S2 ( H 750 )', 'Hankook Kinergy 4S 2'],
-  // Göggel abbreviates Nexen Winguard
+  ['HANKOOK W 462 Winter i*cept RS 3', 'Hankook Winter i*cept RS3'],
+  ['HANKOOK W 330 Winter i*cept evo3', 'Hankook Winter i*cept evo3 W330'],
+  ['HANKOOK K 125 Ventus Prime 3', 'Hankook Ventus Prime 3'],
+  ['Hankook ventus PRime 3 K125', 'Hankook Ventus Prime 3'], // ÖAMTC 2021
+  ['HANKOOK RA 18 Vantra LT', 'Hankook Vantra LT'],
+  // Göggel writes Kumho without the model line
+  ['KUMHO WP52+', 'Kumho WinterCraft WP52+'],
+  ['KUMHO WP52', 'Kumho WinterCraft WP52'],
+  ['KUMHO PS71', 'Kumho Ecsta PS71'],
+  ['KUMHO HS52', 'Kumho Ecsta HS52'],
+  ['KUMHO ES31', 'KUMHO ecowing ES31'],
+  ['KUMHO KC53', 'Kumho PorTran KC53'],
+  ['KUMHO HA32+', 'Kumho Solus 4S HA32+'],
+  // other short forms, pattern codes and typos
   ['NEXEN WG SNOW G 3 WH21', 'NEXEN WINGUARD SNOW´G3'],
+  ['PIRELLI W Sottozero 3', 'PIRELLI WINTER SOTTOZERO 3'],
+  ['PIRELLI P 1 Cinturato Verde', 'PIRELLI Cinturato P1 VERDE'],
+  ['PIRELLI Scorpion All Terrain Plus', 'Pirelli Scorpion A/T+'],
+  ['BRIDGESTONE A005 EVO', 'Bridgestone Weather Control A005-Evo'],
+  ['BRIDGESTONE A005', 'Bridgestone Weather Control A005'],
+  ['BRIDGESTONE Turanza All Sseason 6', 'Bridgestone Turanza All Season 6'],
+  ['BRIDGESTONE Dueler All Terrain A/T002', 'Bridgestone Dueler A/T002'],
+  ['GOODYEAR Vector 4 Seasons Generation 3', 'Goodyear Vector 4Seasons Gen-3'],
+  ['GOODYEAR Vector 4 Seasons Generation 2', 'Goodyear Vector 4Seasons Gen-2'],
+  ['CONTINENTAL Premiumcontact 5', 'Continental ContiPremiumContact 5'],
+  ['FULDA Montero 3', 'FULDA KRISTALL MONTERO 3'],
+  ['FALKEN ZIEX ZE310 EC', 'Falken ZIEX ZE310 ECORUN'],
+  ['MAXXIS Mecotra 3 ME3', 'Maxxis Mecotra 3'],
+  ['MAXXIS Premitra 5 HP5', 'Maxxis Premitra 5'],
+  ['YOKOHAMA BluEarth-4S AW21', 'Yokohama BluEarth-4S'],
+  ['BFGOODRICH Adavantage All-Season', 'BFGoodrich Advantage All-Season'],
 ]
 
 let variants: Map<string, string> | null = null
@@ -59,7 +91,7 @@ function ratings(): Map<string, OeamtcRating> {
   // tests are newest first, so the first result for a tyre and size is the newest one
   const ordered = [...OEAMTC_RESULTS].sort((a, b) => a[0] - b[0])
   for (const [test, product, size, grade, verdict, page] of ordered) {
-    const key = `${tyreKey(product)}|${size}`
+    const key = `${variantOf(tyreKey(product))}|${size}`
     if (index.has(key)) continue
     const { label, url } = OEAMTC_TESTS[test]
     index.set(key, { grade, verdict, test: label, url: url + page })
