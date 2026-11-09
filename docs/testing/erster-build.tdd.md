@@ -67,8 +67,10 @@ Lines 99,02 % (Schwelle 80 %).
 
 ## Bekannte Lücken
 
-- **Login gegen die echten Shops ist nicht getestet.** Die Accounts gehören dem Nutzer, Passwörter
-  gibt Claude nicht ein. Prüfbar mit `supabase/functions/.env` und `npm run dev:api`.
+- **Login gegen die echten Shops ist nur manuell geprüft** (2026-11-09, `npm run dev:api` mit den
+  vom Nutzer eingetragenen Zugangsdaten in `supabase/functions/.env`): Suche 205/55 R16 liefert bei
+  beiden Shops 20 Angebote ohne Fehler (Göggel ca. 16 s, Weichberger ca. 7 s), in der UI zusätzlich
+  185/65 R15 Winter mit ÖAMTC-Zeile (AC43). Kein automatisierter Live-Test.
 - **Supabase-Spike (Rechenzentrums-IPs)** offen, weil noch kein Supabase-Projekt verbunden ist.
 - **Warenkorb (Phase 3)** nicht begonnen, blockiert durch fehlende Accounts mit Warenkorb-Recht.
 - **AC1/AC4** live nur manuell geprüft. Es gibt keinen automatisierten E2E-Test mit Playwright,
