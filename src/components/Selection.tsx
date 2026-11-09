@@ -1,22 +1,40 @@
 // Ticked tyres (AC31) in their own area outside the filters: the list, "Auswahl aufheben" and the
-// actions on the selection (offer PDF, later cart). Wide PC: a column at the right screen edge;
+// actions on the selection (into the shop carts, offer PDF). Wide PC: a column at the right screen edge;
 // narrower screens: a block between filters and results, with the actions floating bottom right.
 import { useState } from 'react'
 import { formatEuro } from '../messages.ts'
 import type { SelectedTyre } from '../pdf/offer-model.ts'
-import { ShopBadge } from './ResultList.tsx'
+import { offerKey, ShopBadge } from './ResultList.tsx'
+
+/** Where a ticked tyre stands with the cart of its shop (spec 3.4). */
+export type CartEntry =
+  { status: 'pending' } | { status: 'ok' } | { status: 'error'; message: string }
 
 export interface SelectionProps {
   items: SelectedTyre[]
   onRemove: (item: SelectedTyre) => void
   onClear: () => void
   onOfferPdf: () => Promise<void>
+  /** Cart state per ticked tyre, keyed by offerKey. */
+  cart: Record<string, CartEntry>
+  onAddToCart: () => Promise<void>
 }
 
-export function Selection({ items, onRemove, onClear, onOfferPdf }: SelectionProps) {
+export function Selection({
+  items,
+  onRemove,
+  onClear,
+  onOfferPdf,
+  cart,
+  onAddToCart,
+}: SelectionProps) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   if (items.length === 0) return null
+
+  const adding = items.some((i) => cart[offerKey(i.offer)]?.status === 'pending')
+  // nothing left to put into a cart: a further click must not add the tyres a second time
+  const allInCart = items.every((i) => cart[offerKey(i.offer)]?.status === 'ok')
 
   const makePdf = async () => {
     setBusy(true)
@@ -37,6 +55,7 @@ export function Selection({ items, onRemove, onClear, onOfferPdf }: SelectionPro
         {items.map((item) => {
           const { offer } = item
           const name = `${offer.brand} ${offer.profile}`
+          const entry = cart[offerKey(offer)]
           return (
             <li key={`${offer.shop}-${offer.shopArticleId}`} className="selection__item">
               <span className="selection__text">
@@ -47,6 +66,20 @@ export function Selection({ items, onRemove, onClear, onOfferPdf }: SelectionPro
                   <ShopBadge shop={offer.shop} mini />
                   {`${item.quantity} Stk · ${formatEuro(offer.priceGrossCents)}`}
                 </span>
+                {entry?.status === 'pending' && (
+                  <span className="selection__cart">wird in den Warenkorb gelegt …</span>
+                )}
+                {entry?.status === 'ok' && (
+                  <span className="selection__cart selection__cart--ok">
+                    <span aria-hidden="true">✓ </span>
+                    <span>Im Warenkorb</span>
+                  </span>
+                )}
+                {entry?.status === 'error' && (
+                  <span className="selection__cart selection__cart--error" role="alert">
+                    {entry.message}
+                  </span>
+                )}
               </span>
               <button
                 type="button"
@@ -69,6 +102,14 @@ export function Selection({ items, onRemove, onClear, onOfferPdf }: SelectionPro
             {error}
           </p>
         )}
+        <button
+          type="button"
+          className="button button--confirm flyout__cart"
+          onClick={onAddToCart}
+          disabled={adding || allInCart}
+        >
+          {adding ? 'Wird abgelegt …' : 'In den Warenkorb'}
+        </button>
         <button type="button" className="flyout__primary" onClick={makePdf} disabled={busy}>
           {busy ? 'PDF wird erstellt …' : 'Angebot als PDF'}
         </button>

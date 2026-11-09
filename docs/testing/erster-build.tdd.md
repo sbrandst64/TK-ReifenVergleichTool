@@ -5,7 +5,7 @@ Stand 2026-11-06, Branch `feat/erster-build`.
 ## Quelle
 
 [docs/spec.md](../spec.md) v3, Akzeptanzkriterien AC1–AC26. Die User Journeys stammen aus der Spec
-(Suche, Preis, Zusammenführen, Fehler). Den Warenkorb (Phase 3) deckt dieser Build nicht ab.
+(Suche, Preis, Zusammenführen, Fehler). Der Warenkorb (Phase 3) kam am 2026-11-09 dazu (Zeilen 31–35).
 
 ## Ablauf (Checkpoint-Commits)
 
@@ -49,6 +49,12 @@ Stand 2026-11-06, Branch `feat/erster-build`.
 | 27 | Kopf zeigt die Logos von Weichberger und Göggel als Links; Klick öffnet den Shop in neuem Tab (`noopener noreferrer`), die App bleibt offen (AC42). RED: 24521a1 | `src/App.test.tsx` | component |
 | 28 | ÖAMTC-Gesamtnote und Urteil unter dem Reifennamen, wenn Marke, Modell und Größe in der Winter-2026-Tabelle stehen; sonst nichts. Nur Anzeige, nicht im PDF (AC43). RED: 58d0532 | `src/oeamtc-ratings.test.ts`, `src/App.test.tsx` | `src/App.test.tsx` | component |
 | 29 | Auswahl hat einen eigenen Bereich außerhalb von Filter und Reifenliste, mit Liste, „Auswahl aufheben“ und „Angebot als PDF“ (AC31, Wunsch 2026-11-09; ersetzt Zeile 24). PC ab 1280 px: Spalte am rechten Rand, im Browser geprüft bei 1440/1400/1280/1100/375 px. RED: 68036c5 | `src/App.test.tsx` | component |
+| 30 | Auswahl-Zeile zeigt das Mini-Logo ihres Shops; „Speichern“ in den Einstellungen ist grün (hatte eine Klasse ohne Styles). RED: 72820e1 | `src/App.test.tsx` | component |
+| 31 | Weichberger-Warenkorb: liest zuerst „Automatische Bestellung“ (an → AUTO_ORDER_ENABLED, unlesbar oder widersprüchlich → AUTO_ORDER_UNKNOWN, jeweils ohne Ablage), legt dann je Reifen mit Stückzahl ab; abgelehnte Reifen einzeln gemeldet (AC19, AC20). Parser gegen die echte Seite geprüft. RED: a533c3e | `test/backend/weichberger-cart.test.ts` | unit + adapter |
+| 32 | Göggel-Warenkorb: sucht die Größe in derselben Sitzung, blättert bis zur Artikelnummer, sendet das Formular der Trefferseite mit der Stückzahl nur in dieser Zeile, prüft die Position auf der Warenkorb-Seite; nicht gefunden → ITEM_NOT_FOUND ohne Ablage (AC44). RED: a533c3e | `test/backend/goeggel-cart.test.ts` | unit + adapter |
+| 33 | Freigabeliste: Checkout, Bestellschritt, Bestellungen, Einstellungen ändern, Warenkorb leeren/löschen werden abgelehnt, bevor etwas an den Shop geht (AC21). RED: a533c3e | `test/backend/weichberger-cart.test.ts`, `test/backend/goeggel-cart.test.ts` | unit |
+| 34 | Dienst `cart`: 401 ohne Code, 400 bei ungültiger Anfrage (u. a. doppelter Artikel, Stückzahl außerhalb 1–20), ein Ergebnis je Reifen, Shop-Fehler ohne Details, Timeout (AC25). RED: a533c3e | `test/backend/cart-handler.test.ts` | integration |
+| 35 | „In den Warenkorb“: ein Aufruf je Shop mit den Stückzahlen, „Im Warenkorb“ oder Fehler je Reifen, Shop-Fehler von Weichberger hindert Göggel nicht, zweiter Klick legt nichts doppelt ab (AC18–AC20 in der UI). RED: 792551f | `src/App.test.tsx`, `src/api.test.ts` | component |
 | 14 | Filterbereich farblich abgesetzt, Logos lesbar, Tags springen nicht (AC29, manuell) | Browser bei 375, 768, 1024, 1280 px | manuell |
 
 ## Zusätzlich manuell verifiziert (nicht automatisiert)
@@ -73,6 +79,8 @@ Lines 99,02 % (Schwelle 80 %).
   beiden Shops 20 Angebote ohne Fehler (Göggel ca. 16 s, Weichberger ca. 7 s), in der UI zusätzlich
   185/65 R15 Winter mit ÖAMTC-Zeile (AC43). Kein automatisierter Live-Test.
 - **Supabase-Spike (Rechenzentrums-IPs)** offen, weil noch kein Supabase-Projekt verbunden ist.
-- **Warenkorb (Phase 3)** nicht begonnen, blockiert durch fehlende Accounts mit Warenkorb-Recht.
+- **Warenkorb (Phase 3): kein Live-Schreibtest.** Die Ablage ist nur gegen Fixtures und
+  aufgezeichnete Seiten geprüft (lesend auch gegen die echten Seiten: Einstellung „aus“, Warenkorb
+  leer). AC18 prüft der Nutzer selbst. Ob der Warenkorb am Account hängt, ist nicht belegt.
 - **AC1/AC4** live nur manuell geprüft. Es gibt keinen automatisierten E2E-Test mit Playwright,
   weil der echte Shop-Zugang fehlt.

@@ -26,8 +26,8 @@ Bedient wird oft ohne Tastatur, per Maus oder Smartphone.
 | E5 | Weichberger-Treffer kamen im Test nach EK aufsteigend; Göggel-Sortierung und -Filter „nur verfügbare“ laufen über `filtereSuchergebnis` (Richtung bzw. Standardzustand nicht verifiziert) | phase0-recon.md › Sortierung, Nur lagernd, Details für die Adapter |
 | E6 | Göggel-Kalkulation des Onkels: Basis Netto-EK, Aufschlag 0 % + 39 €, Rundung 0,10 € auf Brutto-VK; die Formel reproduzierte im Test den angezeigten Göggel-Preis | phase0-recon.md › Entscheidungen |
 | E7 | Göggel-Versand PKW: 1 Reifen 6,50 €/Stück, ab 2 Reifen frei Haus | phase0-recon.md › Versandkosten |
-| E8 | Weichberger hat die Kontoeinstellung „Automatische Bestellung“ (aktuell aus) | phase0-recon.md › Automatisches Bestellen |
-| E9 | Warenkorb-Requests nur aus JS/HTML abgeleitet; Persistenz am Account unbekannt (Weichberger) bzw. wahrscheinlich (Göggel); beide Accounts nur lesend | phase0-recon.md › Warenkorb-Request, Warenkorb am Account gespeichert? |
+| E8 | Weichberger hat die Kontoeinstellung „Automatische Bestellung“ (aktuell aus); Seite `/cu/UserSettings`, Schalter ist eine Checkbox, das Formular steht zweimal auf der Seite | phase0-recon.md › Automatisches Bestellen |
+| E9 | Warenkorb-Requests beider Shops aufgezeichnet (2026-11-09), Accounts können Warenkorb. Persistenz am Account nicht belegt (Weichberger unbekannt, Göggel wahrscheinlich) | phase0-recon.md › Warenkorb-Request, Warenkorb am Account gespeichert? |
 | E10 | Nutzerentscheidungen: nur lagernd (≥ Stückzahl), günstigste zuerst, Marke nur wenn gesetzt, Endkundenpreis einheitlich EK + 39 € + Versand, Weichberger-Nebenlager gelb, Filter als Tags (Saison/Marke mehrfach, Stückzahl), Größe als Dropdown, Werkstatt-Code, neues Repo | phase0-recon.md › Entscheidungen |
 | E12 | Startliste der Marken (20 Hersteller aus dem Weichberger-Filter); Weichberger-Suchformular nimmt eine Marke, Göggel eine Marke als Freitext; Mehrfachfilter der Shops nicht verifiziert | phase0-recon.md › Details für die Adapter |
 | E11 | Arbeitsweise laut Auftrag: spec-first, TDD mit anonymisierten Fixtures, Live-Tests opt-in, Quality-Gate vor „fertig“ | Auftrag des Nutzers (Abschnitt „Arbeitsweise“) |
@@ -109,11 +109,18 @@ aufgeführt und gelten, solange niemand widerspricht.
 
 ### 3.4 Auswahl und Warenkorb (Phase 3)
 - Angebote lassen sich per Checkbox auswählen (siehe 3.7). Die Auswahl ist pro Shop gruppiert.
-- Ein Klick „In den Warenkorb legen“ legt die ausgewählten Positionen in den Warenkorb des
-  jeweiligen Shops. Die UI zeigt je Position Erfolg oder einen Fehler.
-- **Gate:** Phase 3 startet erst nach einem Spike, der belegt, dass der Warenkorb am Account
-  gespeichert wird und nicht an der Session hängt (E9, §8). Sonst funktioniert „eine Session pro
-  Anfrage“ nicht.
+- Ein Klick „In den Warenkorb“ (im Bereich „Auswahl“, über „Angebot als PDF“) legt die
+  ausgewählten Reifen mit ihrer Stückzahl in den Warenkorb des jeweiligen Shops: ein Aufruf des
+  Dienstes `cart` je Shop. Die UI zeigt je Reifen „Im Warenkorb“ oder den Fehler. Was schon im
+  Warenkorb liegt, wird bei einem weiteren Klick nicht noch einmal abgelegt.
+- Göggel kennt beim Ablegen nur eine Zeilennummer der Trefferliste, die nur in der Sitzung gilt,
+  die gesucht hat. Der Adapter sucht deshalb die Größe in derselben Sitzung neu, findet die Zeile
+  über die Artikelnummer und sendet das Formular der Trefferseite. Danach prüft er auf der
+  Warenkorb-Seite, dass die Position mit der Stückzahl dort steht.
+- **Gate (Stand 2026-11-09): noch offen.** Der Spike, der belegt, dass der Warenkorb am Account
+  gespeichert wird und nicht an der Session hängt (E9, §8), steht aus. Auf Wunsch des Nutzers ist
+  die Ablage trotzdem gebaut; den Live-Test (AC18) macht der Nutzer selbst. Hängt der Warenkorb an
+  der Sitzung, sieht der Onkel die Positionen nicht, weil die App je Aufruf eine neue Sitzung nutzt.
 - Weichberger: Vor dem Ablegen liest der Adapter die Einstellung „Automatische Bestellung“ (E8).
   - aktiv → nichts ablegen, Fehler `AUTO_ORDER_ENABLED`
   - nicht lesbar oder nicht eindeutig → nichts ablegen, Fehler `AUTO_ORDER_UNKNOWN` (fail closed)
@@ -242,7 +249,7 @@ In Klammern steht die Phase. „Fixture-Daten“ heißt: anonymisierte, aufgezei
 - AC17 (P2) – Gruppen sind nach ihrem günstigsten Endkundenpreis aufsteigend sortiert.
 
 **Warenkorb**
-- AC18 (P3) – Live, mit einem Account mit Warenkorb-Recht: Nach „In den Warenkorb legen“ sieht der
+- AC18 (P3) – Live, mit einem Account mit Warenkorb-Recht: Nach „In den Warenkorb“ sieht der
   Onkel die Positionen mit der gewählten Stückzahl, wenn er sich selbst im Shop anmeldet.
 - AC19 (P3) – Ist bei Weichberger „Automatische Bestellung“ aktiv, wird nichts abgelegt, und die UI
   zeigt „Weichberger: Automatische Bestellung ist aktiv – Warenkorb wird nicht befüllt“.
@@ -250,6 +257,10 @@ In Klammern steht die Phase. „Fixture-Daten“ heißt: anonymisierte, aufgezei
   „Weichberger: Bestell-Einstellung nicht lesbar – Warenkorb wird nicht befüllt“.
 - AC21 (P3) – Ein Aufruf eines Bestell- oder Checkout-Endpunkts über einen Adapter wird abgelehnt,
   ohne dass der Shop kontaktiert wird. Keine Warenkorb-Antwort enthält eine Bestellbestätigung.
+  Ebenso abgelehnt: Einstellungen ändern, Warenkorb leeren, Positionen löschen.
+- AC44 (P3) – Findet Göggel den Reifen in der neuen Suche nicht mehr, wird nichts abgelegt, und
+  die UI zeigt „Göggel: Reifen im Shop nicht mehr gefunden – bitte neu suchen“. Nimmt ein Shop
+  den Reifen nicht an, zeigt sie „… Shop hat den Reifen nicht in den Warenkorb übernommen“.
 
 **Fehler / Sicherheit**
 - AC22 (P1/P4) – Bei falschen Shop-Zugangsdaten zeigt die UI für diesen Shop „Anmeldung
@@ -334,9 +345,9 @@ In Klammern steht die Phase. „Fixture-Daten“ heißt: anonymisierte, aufgezei
    Sperre wird pausiert und neu entschieden.
 2. **Phase 1:** Adapter `search` + Parser + Preis + Fehlercodes, testgetrieben mit Fixtures.
 3. **Phase 2:** UI + Matching, Deployment auf GitHub Pages.
-4. **Phase 3:** Warenkorb. **Blockiert**, bis pro Shop ein Login mit Warenkorb-Recht vorliegt.
-   Danach zuerst ein Spike: Ablage, Persistenz am Account, Verhalten bei Parallel-Login (Göggel vorab
-   im Demo-Shop). Erst dann folgt die Umsetzung.
+4. **Phase 3:** Warenkorb. Gebaut am 2026-11-09 nach den Aufzeichnungen des Nutzers (Accounts mit
+   Warenkorb-Recht liegen vor). Offen: Live-Test durch den Nutzer und der Spike zur Persistenz am
+   Account sowie zum Verhalten bei Parallel-Login.
 5. **Phase 4:** Fehlermeldungen in der UI, Live-Smoke-Test, Quality-Gate.
 
 ## 8. Offene Fragen

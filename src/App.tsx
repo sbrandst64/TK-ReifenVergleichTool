@@ -6,21 +6,24 @@ import { DEFAULT_PDF_TEXTS, type PdfTexts } from '../supabase/functions/_shared/
 import { groupOffers } from '../supabase/functions/_shared/matching.ts'
 import {
   SHOPS,
+  type ApiErrorCode,
   type SearchQuery,
   type ShopId,
   type TireOffer,
 } from '../supabase/functions/_shared/types.ts'
 import {
+  defaultCart,
   defaultSearch,
   defaultSettings,
   UnauthorizedError,
+  type CartFn,
   type SearchFn,
   type SettingsApi,
 } from './api.ts'
 import { CodePrompt } from './components/CodePrompt.tsx'
 import { offerKey, ResultList } from './components/ResultList.tsx'
 import { SearchForm } from './components/SearchForm.tsx'
-import { Selection } from './components/Selection.tsx'
+import { Selection, type CartEntry } from './components/Selection.tsx'
 import { SettingsDialog } from './components/SettingsDialog.tsx'
 import { errorMessage, SHOP_LABEL, SHOP_URL } from './messages.ts'
 import { DEFAULTS, SEASON_OPTIONS } from './options.ts'
@@ -33,6 +36,8 @@ export interface AppProps {
   makeOfferPdf?: (items: SelectedTyre[], texts: PdfTexts) => Promise<void>
   /** Central PDF texts (replaced in tests). */
   settings?: SettingsApi
+  /** Puts tyres into a shop's cart (replaced in tests). */
+  cart?: CartFn
 }
 
 type ShopState =
@@ -93,6 +98,7 @@ export function App({
   search = defaultSearch,
   makeOfferPdf = downloadOfferPdf,
   settings = defaultSettings,
+  cart = defaultCart,
 }: AppProps) {
   // PDF texts: template until the central ones arrive (AC37); dialog via "Einstellungen" (AC36).
   const [pdfTexts, setPdfTexts] = useState<PdfTexts>(DEFAULT_PDF_TEXTS)
@@ -103,6 +109,8 @@ export function App({
   const [selection, setSelection] = useState<SelectedTyre[]>([])
   // Quantity marked in the filter right now; a tick takes it, even without a new search (AC31).
   const [filterQuantity, setFilterQuantity] = useState(DEFAULTS.quantity)
+  // Cart state per ticked tyre (offerKey); gone again when the tyre leaves the selection.
+  const [cartState, setCartState] = useState<Record<string, CartEntry>>({})
   const selectedKeys = useMemo(() => new Set(selection.map((s) => offerKey(s.offer))), [selection])
   const [code, setCode] = useState(readCode)
   const [codeError, setCodeError] = useState<string | null>(null)
@@ -148,8 +156,64 @@ export function App({
     setSettingsOpen(false)
   }
 
+  const forgetCart = (keys: string[]) =>
+    setCartState((prev) =>
+      Object.fromEntries(Object.entries(prev).filter(([k]) => !keys.includes(k))),
+    )
+
+  // Puts every ticked tyre that is not in a cart yet into the cart of its shop (spec 3.4).
+  // One call per shop; nothing is ordered.
+  const addToCart = async () => {
+    const todo = selection.filter((s) => cartState[offerKey(s.offer)]?.status !== 'ok')
+    if (todo.length === 0) return
+    const mark = (items: SelectedTyre[], entry: (item: SelectedTyre) => CartEntry) =>
+      setCartState((prev) => ({
+        ...prev,
+        ...Object.fromEntries(items.map((i) => [offerKey(i.offer), entry(i)])),
+      }))
+    mark(todo, () => ({ status: 'pending' }))
+    await Promise.all(
+      SHOPS.map(async (shop) => {
+        const items = todo.filter((s) => s.offer.shop === shop)
+        if (items.length === 0) return
+        const failed = (code: ApiErrorCode): CartEntry => ({
+          status: 'error',
+          message: errorMessage(shop, code),
+        })
+        try {
+          const res = await cart(
+            shop,
+            items.map(({ offer, quantity }) => ({
+              shopArticleId: offer.shopArticleId,
+              quantity,
+              width: offer.width,
+              height: offer.height,
+              rim: offer.rim,
+              description: offer.description,
+            })),
+            code,
+          )
+          if (res.error) {
+            const shopError = res.error.code
+            mark(items, () => failed(shopError))
+            return
+          }
+          mark(items, (item) => {
+            const result = res.results.find((r) => r.shopArticleId === item.offer.shopArticleId)
+            return result?.ok ? { status: 'ok' } : failed(result?.error?.code ?? 'UPSTREAM_ERROR')
+          })
+        } catch (e) {
+          mark(items, () =>
+            failed(e instanceof UnauthorizedError ? 'UNAUTHORIZED' : 'UPSTREAM_ERROR'),
+          )
+        }
+      }),
+    )
+  }
+
   const toggle = (offer: TireOffer) => {
     const key = offerKey(offer)
+    forgetCart([key])
     setSelection((prev) =>
       prev.some((s) => offerKey(s.offer) === key)
         ? prev.filter((s) => offerKey(s.offer) !== key)
@@ -277,8 +341,13 @@ export function App({
           <Selection
             items={selection}
             onRemove={(item) => toggle(item.offer)}
-            onClear={() => setSelection([])}
+            onClear={() => {
+              setSelection([])
+              setCartState({})
+            }}
             onOfferPdf={() => makeOfferPdf(selection, pdfTexts)}
+            cart={cartState}
+            onAddToCart={addToCart}
           />
           <section className="results-col" aria-label="Suchergebnisse">
             <div className="status" aria-live="polite">

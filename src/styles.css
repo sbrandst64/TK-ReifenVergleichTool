@@ -713,6 +713,20 @@ input:focus-visible {
   color: var(--muted);
 }
 
+/* cart state of a ticked tyre */
+.selection__cart {
+  color: var(--muted);
+}
+
+.selection__cart--ok {
+  color: var(--best-text);
+  font-weight: 600;
+}
+
+.selection__cart--error {
+  color: var(--error-text);
+}
+
 .selection__item + .selection__item {
   margin-top: 6px;
 }
@@ -763,6 +777,19 @@ input:focus-visible {
   cursor: pointer;
 }
 
+/* "In den Warenkorb": same size as the PDF button, green because it stores something */
+.flyout .flyout__cart {
+  min-height: 52px;
+  padding: 0 24px;
+  box-shadow: 0 8px 24px rgb(21 128 61 / 0.3);
+}
+
+.flyout .flyout__cart:disabled {
+  box-shadow: none;
+  cursor: default;
+  opacity: 0.55;
+}
+
 .flyout__primary:disabled {
   cursor: progress;
   opacity: 0.75;
@@ -775,9 +802,9 @@ input:focus-visible {
   }
 }
 
-/* room so the floating button never covers the last offer's price */
+/* room so the floating buttons never cover the last offer's price */
 .app--selection {
-  padding-bottom: 96px;
+  padding-bottom: 156px;
 }
 
 @media (hover: hover) {
@@ -883,7 +910,7 @@ input:focus-visible {
 
   /* the .app shorthand above resets the room for the floating button */
   .app--selection {
-    padding-bottom: 96px;
+    padding-bottom: 156px;
   }
 
   .flyout {
