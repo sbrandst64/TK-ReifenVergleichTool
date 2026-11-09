@@ -2,8 +2,9 @@
 // actions on the selection (offer PDF, later cart). Wide PC: a column at the right screen edge;
 // narrower screens: a block between filters and results, with the actions floating bottom right.
 import { useState } from 'react'
-import { formatEuro, SHOP_LABEL } from '../messages.ts'
+import { formatEuro } from '../messages.ts'
 import type { SelectedTyre } from '../pdf/offer-model.ts'
+import { ShopBadge } from './ResultList.tsx'
 
 export interface SelectionProps {
   items: SelectedTyre[]
@@ -39,7 +40,13 @@ export function Selection({ items, onRemove, onClear, onOfferPdf }: SelectionPro
           return (
             <li key={`${offer.shop}-${offer.shopArticleId}`} className="selection__item">
               <span className="selection__text">
-                {`${name} · ${offer.width}/${offer.height} R${offer.rim} · ${SHOP_LABEL[offer.shop]} · ${item.quantity} Stk · ${formatEuro(offer.priceGrossCents)}`}
+                <span className="selection__name">
+                  {`${name} · ${offer.width}/${offer.height} R${offer.rim}`}
+                </span>
+                <span className="selection__detail">
+                  <ShopBadge shop={offer.shop} mini />
+                  {`${item.quantity} Stk · ${formatEuro(offer.priceGrossCents)}`}
+                </span>
               </span>
               <button
                 type="button"

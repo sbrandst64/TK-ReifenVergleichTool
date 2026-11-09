@@ -22,9 +22,9 @@ function AvailabilityTag({ offer }: { offer: TireOffer }) {
 }
 
 /** Shop logo on a badge in the shop's colour, so the source is clear at a glance (AC28). */
-function ShopBadge({ shop }: { shop: ShopId }) {
+export function ShopBadge({ shop, mini = false }: { shop: ShopId; mini?: boolean }) {
   return (
-    <span className={`shop-badge shop-badge--${shop}`}>
+    <span className={`shop-badge shop-badge--${shop}${mini ? ' shop-badge--mini' : ''}`}>
       <img
         className="shop-badge__logo"
         src={`${import.meta.env.BASE_URL}logos/${shop}.png`}

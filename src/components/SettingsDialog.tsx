@@ -152,7 +152,7 @@ export function SettingsDialog({ texts, warning, onSave, onClose }: SettingsDial
           <button
             type="submit"
             form={`${titleId}-form`}
-            className="selection__primary"
+            className="button button--confirm"
             disabled={saving}
           >
             {saving ? 'Speichert …' : 'Speichern'}

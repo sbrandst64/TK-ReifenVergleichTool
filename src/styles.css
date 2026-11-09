@@ -10,6 +10,8 @@
   --accent: #1d4ed8; /* 6.7:1 on white */
   --accent-hover: #1e40af;
   --accent-text: #ffffff;
+  --confirm: #15803d; /* save / put into cart; 5:1 with white text */
+  --confirm-hover: #166534;
   --best-bg: #ecfdf3;
   --best-line: #86efac;
   --best-text: #166534; /* 7:1 on --best-bg */
@@ -351,6 +353,27 @@ input {
   font-weight: 600;
 }
 
+/* actions that store something (save settings, put into the cart): solid green */
+.button--confirm {
+  padding-inline: 22px;
+  border-color: var(--confirm);
+  background: var(--confirm);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.button--confirm:disabled {
+  cursor: progress;
+  opacity: 0.75;
+}
+
+@media (hover: hover) {
+  .button--confirm:hover:not(:disabled) {
+    border-color: var(--confirm-hover);
+    background: var(--confirm-hover);
+  }
+}
+
 /* same font weight as inactive tags: bold text is wider and made the rows jump */
 .tag--active {
   border-color: var(--accent);
@@ -554,6 +577,18 @@ input:focus-visible {
   width: auto;
 }
 
+/* small variant for the selection list */
+.shop-badge--mini {
+  flex: none;
+  height: 22px;
+  padding: 0 5px;
+  border-radius: 4px;
+}
+
+.shop-badge--mini .shop-badge__logo {
+  height: 14px;
+}
+
 .shop-badge--weichberger {
   border-color: var(--shop-weichberger);
   background: #ffffff;
@@ -658,6 +693,24 @@ input:focus-visible {
   border: 1px solid var(--panel-line);
   border-radius: var(--radius);
   background: var(--bg);
+}
+
+.selection__text {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.selection__name {
+  font-weight: 600;
+}
+
+.selection__detail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  color: var(--muted);
 }
 
 .selection__item + .selection__item {
