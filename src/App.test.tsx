@@ -356,24 +356,19 @@ describe('App', () => {
       return { user, search, makeOfferPdf }
     }
 
-    // list + "Auswahl aufheben" sit in the left panel, the PDF action floats bottom right
-    const bar = () =>
-      within(screen.getByTestId('search-panel')).getByRole('region', { name: 'Auswahl' })
-    const actions = () => screen.getByRole('region', { name: 'Aktionen zur Auswahl' })
+    // the selection has its own area next to the results (PC: right screen edge), not in the filters
+    const bar = () => screen.getByRole('region', { name: 'Auswahl' })
+    const actions = () => within(bar()).getByRole('group', { name: 'Aktionen zur Auswahl' })
 
-    it('AC31: the selected list sits in the left panel below the search button', async () => {
+    it('AC31: the selection has its own area outside the filter panel, with both buttons', async () => {
       const { user } = await setup()
-      expect(screen.queryByRole('region', { name: 'Aktionen zur Auswahl' })).toBeNull()
+      expect(screen.queryByRole('region', { name: 'Auswahl' })).toBeNull()
       await user.click(
         await screen.findByRole('checkbox', { name: 'PIRELLI W Sotozero 3 (Göggel) auswählen' }),
       )
-      const searchButton = screen.getByRole('button', { name: 'Suchen' })
-      expect(
-        searchButton.compareDocumentPosition(bar()) & Node.DOCUMENT_POSITION_FOLLOWING,
-      ).toBeTruthy()
+      expect(screen.getByTestId('search-panel')).not.toContainElement(bar())
+      expect(screen.getByRole('region', { name: 'Suchergebnisse' })).not.toContainElement(bar())
       expect(within(bar()).getByRole('button', { name: 'Auswahl aufheben' })).toBeInTheDocument()
-      expect(within(bar()).queryByRole('button', { name: 'Angebot als PDF' })).toBeNull()
-      expect(screen.getByTestId('search-panel')).not.toContainElement(actions())
       expect(within(actions()).getByRole('button', { name: 'Angebot als PDF' })).toBeInTheDocument()
     })
 

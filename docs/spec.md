@@ -146,9 +146,12 @@ aufgeführt und gelten, solange niemand widerspricht.
   die beim Anhaken im Filter markiert ist – auch ohne neue Suche (Wunsch 2026-11-07). Spätere
   Filter-Änderungen ändern bereits gewählte Reifen nicht. Die Auswahl bleibt über weitere Suchen
   erhalten (z. B. Mischbereifung vorne/hinten), lebt aber nur im offenen Fenster (kein Speichern,
-  damit keine alten Preise liegen bleiben). Die Liste der Auswahl steht im linken Bereich unter dem
-  Suchknopf, lässt einzelne Reifen entfernen und bietet „Auswahl aufheben“. „Angebot als PDF“
-  schwebt als eigener Knopf unten rechts (später kommt dort „In den Warenkorb“ dazu).
+  damit keine alten Preise liegen bleiben). Die Auswahl hat einen **eigenen Bereich** außerhalb des
+  Filters (Wunsch 2026-11-09): am breiten PC (ab 1280 px) eine Spalte am rechten Bildschirmrand
+  mit der Liste, „Auswahl aufheben“ und „Angebot als PDF“ unten; die Reifenliste bleibt in der
+  Mitte. Auf schmaleren Bildschirmen steht der Bereich zwischen Filter und Reifenliste, und
+  „Angebot als PDF“ schwebt unten rechts. Einzelne Reifen lassen sich entfernen. (Später kommt
+  neben „Angebot als PDF“ der Knopf „In den Warenkorb“ dazu.)
 - **Angebots-PDF** nach der Excel-Vorlage der Werkstatt („Reifen Angebot_email_2026.xlsx“, Stand Excel,
   ohne Termin und Storno-Hinweis). Es heißt „Reifen-Angebot“ und ist keine Rechnung.
   - Kopfbild der Werkstatt aus der Vorlage, Titel „REIFEN - ANGEBOT“.
@@ -282,8 +285,9 @@ In Klammern steht die Phase. „Fixture-Daten“ heißt: anonymisierte, aufgezei
 **Auswahl und Angebots-PDF (3.7)**
 - AC31 (P5) – Ein Haken an einer Angebotszeile nimmt den Reifen mit der gerade im Filter markierten
   Stückzahl in die Auswahl (auch ohne neue Suche); spätere Filter-Änderungen ändern ihn nicht. Nach einer neuen Suche ist er weiter ausgewählt. „Auswahl aufheben“ leert sie, ein
-  Entfernen-Knopf nimmt einen einzelnen Reifen heraus. Liste und „Auswahl aufheben“ stehen im
-  linken Bereich unter „Suchen“; „Angebot als PDF“ steht außerhalb davon unten rechts.
+  Entfernen-Knopf nimmt einen einzelnen Reifen heraus. Liste, „Auswahl aufheben“ und „Angebot als
+  PDF“ stehen in einem eigenen Bereich „Auswahl“ außerhalb des Filters und der Reifenliste (PC ab
+  1280 px: Spalte am rechten Rand). Ohne Auswahl gibt es den Bereich nicht.
 - AC32 (P5) – Im PDF sind Kunde, E-Mail und Tel:Nr leere Textfelder; Datum ist das heutige Datum;
   Dimension nennt jede gewählte Größe genau einmal; Stück nennt jede Stückzahl der Zeilen genau
   einmal (keine Summe).
