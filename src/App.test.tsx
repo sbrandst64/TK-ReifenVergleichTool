@@ -64,6 +64,22 @@ describe('App', () => {
     expect(logo.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
+  it('shows both shop logos in the header as links that open the shop in a new tab', () => {
+    render(<App search={vi.fn<SearchFn>()} />)
+    const nav = screen.getByRole('navigation', { name: 'Shops öffnen' })
+    const expected: [string, string, RegExp][] = [
+      ['Weichberger-Shop öffnen', 'https://b2b.weichberger.at/', /logos\/weichberger\.png$/],
+      ['Göggel-Shop öffnen', 'https://goeggel-shop.com/', /logos\/goeggel\.png$/],
+    ]
+    for (const [name, href, src] of expected) {
+      const link = within(nav).getByRole('link', { name })
+      expect(link.getAttribute('href')).toBe(href)
+      expect(link.getAttribute('target')).toBe('_blank')
+      expect(link.getAttribute('rel')).toBe('noopener noreferrer')
+      expect(within(link).getByRole('img').getAttribute('src')).toMatch(src)
+    }
+  })
+
   it('asks for the workshop code first and remembers it', async () => {
     const user = userEvent.setup()
     render(<App search={searchWith({})} />)

@@ -264,6 +264,9 @@ In Klammern steht die Phase. „Fixture-Daten“ heißt: anonymisierte, aufgezei
   „Göggel“ gilt das umgekehrt. Standard ist „Beide“.
 - AC28 (P2) – Jede Angebotszeile zeigt das Logo ihres Shops mit dem Shopnamen als Alternativtext,
   auf einem Schild in der Shopfarbe (Weichberger weiß/dunkelblau, Göggel dunkel).
+- AC42 (P2, Wunsch 2026-11-09) – Oben im Kopf stehen die Logos von Weichberger und Göggel als Links.
+  Ein Klick öffnet den jeweiligen Shop (`https://b2b.weichberger.at/`, `https://goeggel-shop.com/`)
+  in einem neuen Tab; die App bleibt offen. Die App meldet dabei niemanden an.
 - AC29 (P2, manuell) – Der Filterbereich hat einen eigenen, hellen Hintergrund und ist so klar von der
   weißen Reifenliste getrennt. Am PC (ab 1024 px) ist er fest am linken Bildschirmrand verankert,
   in voller Höhe, und die Reifenliste nutzt die gesamte restliche Breite des Browsers.
