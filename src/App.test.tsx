@@ -262,7 +262,7 @@ describe('App', () => {
     expect(row.querySelector('.avail--yellow')).toHaveTextContent('2–3 Tage')
   })
 
-  it('AC43: each tested tyre shows the result of its ÖAMTC test, untested sizes show none', async () => {
+  it('AC43: each tested tyre shows its ÖAMTC result in the offer row (logo, stars, coloured grade), untested sizes none', async () => {
     const conti = {
       brand: 'CONTINENTAL',
       profile: 'WinterContact TS 870',
@@ -278,16 +278,26 @@ describe('App', () => {
           ]),
       }),
     )
-    const links = await screen.findAllByRole('link', { name: 'ÖAMTC-Testseite' })
+    const links = await screen.findAllByRole('link', { name: /^ÖAMTC-Test / })
     expect(links).toHaveLength(2)
     const card = (size: string) =>
       screen.getAllByRole('article').find((a) => a.textContent?.includes(size))!
-    expect(card('185/65 R15')).toHaveTextContent('ÖAMTC-Test Winter 2026: Gesamtnote 2,2 (gut)')
-    expect(card('205/55 R16')).toHaveTextContent('ÖAMTC-Test Winter 2024: Gesamtnote 2,0 (gut)')
-    expect(card('195/55 R20')).not.toHaveTextContent('ÖAMTC')
-    expect(within(card('185/65 R15')).getByRole('link').getAttribute('href')).toBe(
+    const row = (size: string) => within(card(size)).getByRole('listitem')
+
+    const r15 = within(row('185/65 R15')).getByRole('link', {
+      name: 'ÖAMTC-Test Winter 2026: Gesamtnote 2,2 (gut)',
+    })
+    expect(r15.getAttribute('href')).toBe(
       'https://www.oeamtc.at/tests/reifentest/winterreifentest-2026/continental-wintercontact-ts-870-89453540',
     )
+    expect(r15.querySelector('img')?.getAttribute('src')).toMatch(/logos\/oeamtc\.png$/)
+    expect(r15.querySelector<HTMLElement>('.stars__fill')?.style.width).toBe('66%')
+    expect(r15.querySelector('.grade--gut')).toHaveTextContent('2,2')
+    expect(r15).toHaveTextContent('Winter 2026')
+
+    within(row('205/55 R16')).getByRole('link', { name: 'ÖAMTC-Test Winter 2024: Gesamtnote 2,0 (gut)' })
+    expect(card('195/55 R20')).not.toHaveTextContent(/ÖAMTC|Winter 20/)
+    expect(card('195/55 R20').querySelector('.rating')).toBeNull()
   })
 
   it('AC11: marks a provisional cheapest offer and missing shipping', async () => {

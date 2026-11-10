@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { OEAMTC_RESULTS, OEAMTC_TESTS } from './oeamtc-data.ts'
-import { NAME_VARIANTS, oeamtcRating, tyreKey } from './oeamtc-ratings.ts'
+import { gradeTone, NAME_VARIANTS, oeamtcRating, oeamtcStars, tyreKey } from './oeamtc-ratings.ts'
 
 const BASE = 'https://www.oeamtc.at/tests/reifentest/'
 const tyre = (over: Partial<Parameters<typeof oeamtcRating>[0]> = {}) => ({
@@ -191,5 +191,25 @@ describe('ÖAMTC data (imported from oeamtc.at)', () => {
       expect(grade, product).toMatch(/^\d,\d$/)
       expect(verdict, `${product} ${grade}`).toBe(band(grade))
     }
+  })
+})
+
+describe('ÖAMTC grade as stars and colour (AC43)', () => {
+  it('turns the grade (0,5 best – 5,5 worst) into 0–5 stars, linear, exact to a tenth', () => {
+    expect(oeamtcStars('0,5')).toBe(5)
+    expect(oeamtcStars('1,0')).toBe(4.5)
+    expect(oeamtcStars('2,2')).toBe(3.3)
+    expect(oeamtcStars('3,0')).toBe(2.5)
+    expect(oeamtcStars('5,5')).toBe(0)
+  })
+
+  it('gives each ÖAMTC verdict its own colour, and every verdict in the data has one', () => {
+    expect(gradeTone('sehr gut')).toBe('sehr-gut')
+    expect(gradeTone('gut')).toBe('gut')
+    expect(gradeTone('befriedigend')).toBe('befriedigend')
+    expect(gradeTone('genügend')).toBe('genuegend')
+    expect(gradeTone('nicht genügend')).toBe('nicht-genuegend')
+    for (const [, product, , , verdict] of OEAMTC_RESULTS)
+      expect(gradeTone(verdict), product).toBeDefined()
   })
 })

@@ -283,8 +283,12 @@ In Klammern steht die Phase. „Fixture-Daten“ heißt: anonymisierte, aufgezei
   in einem neuen Tab; die App bleibt offen. Die App meldet dabei niemanden an.
 - AC43 (P2, Wunsch 2026-11-09, erweitert am selben Tag) – Ist ein Reifen in einem ÖAMTC-Pkw-
   Reifentest seit 2018 getestet (Sommer, Winter, Ganzjahr, All-Terrain; 20 Tests, 488 Ergebnisse)
-  und stimmen Marke + Modell und Größe überein, zeigt die Ergebnisliste unter dem Reifen z. B.
-  „ÖAMTC-Test Winter 2026: Gesamtnote 2,2 (gut)“ mit Link auf die ÖAMTC-Seite dieses Reifens.
+  und stimmen Marke + Modell und Größe überein, steht das Ergebnis in jeder Angebotszeile dieses
+  Reifens (Wunsch 2026-11-10, vorher eine Zeile unter dem Reifennamen): kleines ÖAMTC-Logo, Sterne wie
+  bei einer Bewertung (5,5 − Gesamtnote, also 0,5 = 5 Sterne, 5,5 = 0 Sterne, auf ein Zehntel), die
+  Gesamtnote in der Farbe ihres Urteils (sehr gut, gut, befriedigend, genügend, nicht genügend) und
+  der Test, z. B. „Winter 2026“. Das Ganze ist ein Link auf die ÖAMTC-Seite dieses Reifens, für
+  Screenreader „ÖAMTC-Test Winter 2026: Gesamtnote 2,2 (gut)“.
   Wurde er in derselben Größe mehrmals getestet, gilt der neueste Test. Die Zuordnung ist exakt
   (ohne KI; Groß-/Kleinschreibung, Leer- und Sonderzeichen zählen nicht, „Nokian Tyres“ =
   „Nokian“, hochgestellte Ziffern zählen als Ziffern). Abweichende Schreibweisen der Shops
