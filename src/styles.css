@@ -748,49 +748,66 @@ input:focus-visible {
   cursor: pointer;
 }
 
-/* ---------- actions on the selection: floating bottom right (wide PC: in the column) ---------- */
+/* nothing ticked: only the wide PC shows the (empty) column, see the 1280px block (AC49) */
+.selection--empty {
+  display: none;
+}
+
+.selection__empty {
+  grid-area: list;
+  align-self: start;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+/* ---------- actions on the selection (AC50) ---------- */
+/* phones, tablets, narrow PC: a bar across the bottom of the screen, both buttons side by side, so
+   nothing floats over the prices; wide PC: at the bottom of the selection column */
 .flyout {
   position: fixed;
-  right: max(16px, env(safe-area-inset-right));
-  bottom: calc(16px + env(safe-area-inset-bottom));
+  right: 0;
+  bottom: 0;
+  left: 0;
   z-index: calc(var(--z-sticky) + 1);
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
-  max-width: calc(100vw - 32px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px 10px;
+  padding: 10px max(16px, env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
+  border-top: 1px solid var(--panel-line);
+  background: var(--bg);
+  box-shadow: 0 -6px 18px rgb(17 24 39 / 0.08);
   animation: flyout-in 220ms cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .flyout__error {
+  grid-column: 1 / -1;
+  margin: 0;
   padding: 8px 12px;
   border-radius: var(--radius);
   background: var(--error-bg);
-  box-shadow: 0 6px 18px rgb(17 24 39 / 0.14);
 }
 
 .flyout__primary {
-  min-height: 52px;
-  padding: 0 24px;
+  min-height: 48px;
+  padding: 0 12px;
   border: 0;
   border-radius: var(--radius);
   background: var(--accent);
   color: var(--accent-text);
   font: inherit;
   font-weight: 700;
-  box-shadow: 0 8px 24px rgb(29 78 216 / 0.32);
   cursor: pointer;
 }
 
 /* "In den Warenkorb": same size as the PDF button, green because it stores something */
 .flyout .flyout__cart {
-  min-height: 52px;
-  padding: 0 24px;
-  box-shadow: 0 8px 24px rgb(21 128 61 / 0.3);
+  min-height: 48px;
+  padding: 0 12px;
 }
 
 .flyout .flyout__cart:disabled {
-  box-shadow: none;
   cursor: default;
   opacity: 0.55;
 }
@@ -807,9 +824,9 @@ input:focus-visible {
   }
 }
 
-/* room so the floating buttons never cover the last offer's price */
+/* room so the action bar never covers the last offer */
 .app--selection {
-  padding-bottom: 156px;
+  padding-bottom: calc(92px + env(safe-area-inset-bottom));
 }
 
 @media (hover: hover) {
@@ -963,22 +980,43 @@ input:focus-visible {
 }
 
 /* medium: shop, delivery and price on one line, the ÖAMTC result below the delivery */
-@container (min-width: 600px) {
+@container (min-width: 540px) {
   .offer {
-    grid-template-columns: auto minmax(9rem, 14rem) 1fr auto;
+    grid-template-columns: auto minmax(9.75rem, 10.5rem) 1fr minmax(6.5rem, auto);
     grid-template-areas:
       'sel who info price'
-      'sel who rating price';
+      'sel who rating rating';
     align-items: center;
   }
 }
 
-/* wide: one line per offer; fixed columns so stars and prices line up from row to row */
-@container (min-width: 760px) {
+/* wide: one line per offer; fixed columns so stars and prices line up from row to row.
+   The test name ("Winter 2026") only shows where there is room; it stays in the tooltip. */
+@container (min-width: 700px) {
   .offer {
-    grid-template-columns: auto minmax(9rem, 12rem) 1fr 16.5rem minmax(6.5rem, auto);
+    grid-template-columns: auto minmax(9.75rem, 10.5rem) 1fr 11rem minmax(6.5rem, auto);
     grid-template-areas: 'sel who info rating price';
   }
+
+  .rating__test {
+    display: none;
+  }
+}
+
+@container (min-width: 820px) {
+  .offer {
+    grid-template-columns: auto minmax(9.5rem, 12rem) 1fr 16.5rem minmax(6.5rem, auto);
+  }
+
+  .rating__test {
+    display: inline;
+  }
+}
+
+/* while the shops are searched there is no list yet (AC48) */
+.results-wait {
+  margin: 16px 0 0;
+  color: var(--muted);
 }
 
 /* PC: filters anchored to the left screen edge at full height, the list uses all remaining width */
@@ -1030,14 +1068,16 @@ input:focus-visible {
     padding-top: calc(var(--sidebar) * 238 / 566 + 14px);
   }
 
-  /* the .app shorthand above resets the room for the floating button */
+  /* the .app shorthand above resets the room for the action bar */
   .app--selection {
-    padding-bottom: 156px;
+    padding-bottom: 92px;
   }
 
+  /* the bar starts right of the filter panel */
   .flyout {
-    right: 32px;
-    bottom: 28px;
+    left: var(--sidebar);
+    padding-right: 32px;
+    padding-left: 32px;
   }
 
   .summary {
@@ -1049,12 +1089,20 @@ input:focus-visible {
   }
 }
 
-/* wide PC: the selection is a column anchored to the right screen edge; the tyre list stays in
-   the middle and only gets narrower from the right, so ticked rows do not move */
+/* wide PC: the selection is a column anchored to the right screen edge. It is there from the
+   start (empty: a short note), so the tyre list keeps its width when the first tyre is ticked and
+   no row changes its height (AC49). */
 @media (min-width: 1280px) {
-  .app--selection {
+  .app--columns {
     padding-right: calc(var(--cart) + 32px);
+  }
+
+  .app--selection {
     padding-bottom: 32px;
+  }
+
+  .selection--empty {
+    display: grid;
   }
 
   .selection {
@@ -1078,43 +1126,42 @@ input:focus-visible {
     border: 0;
     border-left: 1px solid var(--panel-line);
     border-radius: 0;
-    animation: selection-in 220ms cubic-bezier(0.25, 1, 0.5, 1);
   }
 
   .selection__list {
     overflow-y: auto;
   }
 
+  /* the two actions stack at the bottom of the column instead of the bar */
   .flyout {
     position: static;
     grid-area: actions;
-    align-items: stretch;
-    max-width: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
     animation: none;
   }
 
-  .flyout__error {
-    box-shadow: none;
+  .flyout__primary,
+  .flyout .flyout__cart {
+    min-height: 52px;
   }
 }
 
 /* with the selection column the header is narrower: shop logos on their own line a bit longer */
 @media (min-width: 1280px) and (max-width: 1399px) {
-  .app--selection .topbar {
+  .app--columns .topbar {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
   }
-  .app--selection .shoplinks {
+  .app--columns .shoplinks {
     grid-row: 2;
     grid-column: 1 / -1;
     margin-left: 0;
-  }
-}
-
-@keyframes selection-in {
-  from {
-    opacity: 0;
-    transform: translateX(24px);
   }
 }
 
@@ -1138,8 +1185,7 @@ input:focus-visible {
   .spinner {
     animation-duration: 2.4s;
   }
-  .flyout,
-  .selection {
+  .flyout {
     animation: none;
   }
 }

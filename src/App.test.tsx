@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { DEFAULT_PDF_TEXTS, type PdfTexts } from '../supabase/functions/_shared/pdf-texts.ts'
@@ -188,7 +188,7 @@ describe('App', () => {
       expect(screen.queryByTestId('results-wait')).toBeNull()
       expect(screen.getByTestId('status-weichberger')).toHaveTextContent('lädt')
       arrive()
-      expect(await screen.findAllByRole('article')).toHaveLength(2)
+      await waitFor(() => expect(screen.getAllByRole('article')).toHaveLength(2))
     })
 
     it('shows the waiting note from the start of the search', async () => {

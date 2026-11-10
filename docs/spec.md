@@ -57,7 +57,8 @@ aufgeführt und gelten, solange niemand widerspricht.
   Shop kann, klärt der Spike (§8).
 - Beide Shops werden parallel durchsucht (E2). Jeder Shop liefert, sobald er fertig ist; seine
   Statuszeile erscheint sofort. Die Reifenliste erscheint in einem Zug, wenn alle gesuchten Shops
-  geantwortet haben, spätestens aber 5 s nach der ersten Antwort (2026-11-10). So sortiert sich die
+  geantwortet haben, spätestens aber 8 s nach der ersten Antwort (2026-11-10; gemessen: Göggel antwortet nach rund
+  3,5 s, Weichberger nach rund 9,5 s). So sortiert sich die
   Liste nicht um, während jemand schon darin liest oder Haken setzt.
 - **Nur lagernd** (E10): Ein Angebot erscheint nur, wenn der verfügbare Bestand ≥ Stückzahl ist.
   - Weichberger: Mengenfilter des Shops `quantity=<Stückzahl>` (E3).
@@ -165,7 +166,7 @@ aufgeführt und gelten, solange niemand widerspricht.
   Filters (Wunsch 2026-11-09): am breiten PC (ab 1280 px) eine Spalte am rechten Bildschirmrand
   mit der Liste, „Auswahl aufheben“ und „Angebot als PDF“ unten; die Reifenliste bleibt in der
   Mitte. Auf schmaleren Bildschirmen steht der Bereich zwischen Filter und Reifenliste, und
-  „Angebot als PDF“ schwebt unten rechts. Einzelne Reifen lassen sich entfernen. (Später kommt
+  die Knöpfe stehen in einer Leiste am unteren Bildschirmrand (AC50). Einzelne Reifen lassen sich entfernen. (Später kommt
   neben „Angebot als PDF“ der Knopf „In den Warenkorb“ dazu.)
 - **Angebots-PDF** nach der Excel-Vorlage der Werkstatt („Reifen Angebot_email_2026.xlsx“, Stand Excel,
   ohne Termin und Storno-Hinweis). Es heißt „Reifen-Angebot“ und ist keine Rechnung.
@@ -230,8 +231,8 @@ In Klammern steht die Phase. „Fixture-Daten“ heißt: anonymisierte, aufgezei
   bei einem Fehler sofort). Für den anderen zeigt die UI Laden bzw. die Fehlermeldung.
 - AC48 (P2, 2026-11-10) – Solange noch keine Liste zu sehen ist, steht dort „Suche läuft. Die Liste
   erscheint, sobald beide Shops geantwortet haben.“ (bei einem Shop nur „Suche läuft.“). Hat der
-  erste Shop geantwortet, wartet die Liste höchstens 5 s auf den zweiten und zeigt dann beide
-  zusammen. Antwortet der zweite später, zeigt sie nach den 5 s den ersten Shop und ergänzt den
+  erste Shop geantwortet, wartet die Liste höchstens 8 s auf den zweiten und zeigt dann beide
+  zusammen. Antwortet der zweite später, zeigt sie nach den 8 s den ersten Shop und ergänzt den
   zweiten bei dessen Antwort. Auf einen Shop mit Fehler und auf einen nicht gesuchten Shop wird
   nicht gewartet.
 - AC5 (P2) – Größe (Dropdowns) sowie Stückzahl, Saison und Marke (Tags) sind ohne Tastatur
@@ -336,6 +337,11 @@ In Klammern steht die Phase. „Fixture-Daten“ heißt: anonymisierte, aufgezei
   Entfernen-Knopf nimmt einen einzelnen Reifen heraus. Liste, „Auswahl aufheben“ und „Angebot als
   PDF“ stehen in einem eigenen Bereich „Auswahl“ außerhalb des Filters und der Reifenliste (PC ab
   1280 px: Spalte am rechten Rand). Ohne Auswahl zeigt der Bereich nur einen Hinweis (AC49).
+- AC50 (P5, 2026-11-10, manuell) – Unter 1280 px stehen „In den Warenkorb“ und „Angebot als PDF“
+  nebeneinander in einer Leiste am unteren Bildschirmrand über die ganze Breite (am PC ab 1024 px
+  rechts neben dem Filter). Die Leiste verdeckt keine Preise; die Liste hat unten so viel Platz,
+  dass auch das letzte Angebot ganz sichtbar ist. Ab 1280 px stehen beide Knöpfe unten in der
+  Auswahl-Spalte.
 - AC49 (P5, 2026-11-10) – Der Bereich „Auswahl“ ist da, sobald der Werkstatt-Code eingegeben ist.
   Ohne Auswahl steht dort „Noch kein Reifen ausgewählt“ mit einer Zeile Anleitung, ohne Liste und
   ohne Knöpfe. Am PC ab 1280 px ist die Spalte dadurch immer sichtbar, und die Reifenliste ändert

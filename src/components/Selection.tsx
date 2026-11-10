@@ -1,6 +1,8 @@
 // Ticked tyres (AC31) in their own area outside the filters: the list, "Auswahl aufheben" and the
-// actions on the selection (into the shop carts, offer PDF). Wide PC: a column at the right screen edge;
-// narrower screens: a block between filters and results, with the actions floating bottom right.
+// actions on the selection (into the shop carts, offer PDF). Wide PC: a column at the right screen
+// edge that is always there, so the tyre list keeps its width when the first tyre is ticked (AC49);
+// narrower screens: a block between filters and results (hidden while empty), with the actions in
+// a bar at the bottom of the screen (AC50).
 import { useState } from 'react'
 import { formatEuro } from '../messages.ts'
 import type { SelectedTyre } from '../pdf/offer-model.ts'
@@ -30,7 +32,16 @@ export function Selection({
 }: SelectionProps) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  if (items.length === 0) return null
+  if (items.length === 0)
+    return (
+      <section className="selection selection--empty" aria-label="Auswahl">
+        <strong className="selection__count">Auswahl</strong>
+        <p className="selection__empty">
+          Noch kein Reifen ausgewählt. Einen Haken an einem Angebot setzen – dann lässt sich daraus
+          ein Angebot als PDF erstellen oder der Reifen in den Warenkorb legen.
+        </p>
+      </section>
+    )
 
   const adding = items.some((i) => cart[offerKey(i.offer)]?.status === 'pending')
   // nothing left to put into a cart: a further click must not add the tyres a second time

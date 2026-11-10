@@ -38,7 +38,12 @@ export interface AppProps {
   settings?: SettingsApi
   /** Puts tyres into a shop's cart (replaced in tests). */
   cart?: CartFn
+  /** How long the list waits for the other shop after the first answer (AC48). */
+  holdMs?: number
 }
+
+/** After the first shop answered, the list waits this long for the other one (AC48). */
+const HOLD_MS = 8000
 
 type ShopState =
   | { status: 'idle' }
@@ -99,6 +104,7 @@ export function App({
   makeOfferPdf = downloadOfferPdf,
   settings = defaultSettings,
   cart = defaultCart,
+  holdMs = HOLD_MS,
 }: AppProps) {
   // PDF texts: template until the central ones arrive (AC37); dialog via "Einstellungen" (AC36).
   const [pdfTexts, setPdfTexts] = useState<PdfTexts>(DEFAULT_PDF_TEXTS)
@@ -115,7 +121,13 @@ export function App({
   const [code, setCode] = useState(readCode)
   const [codeError, setCodeError] = useState<string | null>(null)
   const [shops, setShops] = useState<Record<ShopId, ShopState>>(IDLE)
-  const [lastSearch, setLastSearch] = useState<{ query: SearchQuery; shops: ShopId[] } | null>(null)
+  const [lastSearch, setLastSearch] = useState<{
+    id: number
+    query: SearchQuery
+    shops: ShopId[]
+  } | null>(null)
+  // Search (id) whose waiting time for the slower shop is over (AC48).
+  const [holdOver, setHoldOver] = useState(0)
   const [collapsed, setCollapsed] = useState(false)
   const latest = useRef(0)
 
@@ -140,6 +152,20 @@ export function App({
       return state.status === 'done' && state.offers.length > 0
     }) &&
     groups.every((g) => g.shops.length < 2)
+
+  // The list appears in one go: when every searched shop has answered, or holdMs after the first
+  // answer. So it does not re-sort while somebody is already reading or ticking in it (AC48).
+  const searchId = lastSearch?.id ?? 0
+  const searched = lastSearch?.shops ?? []
+  const loading = searched.filter((s) => shops[s].status === 'loading').length
+  const answered = searched.length - loading
+  const holding = answered > 0 && loading > 0
+  useEffect(() => {
+    if (!holding) return
+    const timer = setTimeout(() => setHoldOver(searchId), holdMs)
+    return () => clearTimeout(timer)
+  }, [holding, searchId, holdMs])
+  const listVisible = loading === 0 || (answered > 0 && holdOver === searchId)
 
   useEffect(() => {
     if (!code) return
@@ -240,7 +266,7 @@ export function App({
 
   const runSearch = (query: SearchQuery, selected: ShopId[]) => {
     const id = ++latest.current
-    setLastSearch({ query, shops: selected })
+    setLastSearch({ id, query, shops: selected })
     setCollapsed(true)
     // Bring summary + results into view (phones: the form above has just folded away).
     document.documentElement.scrollTop = 0
@@ -280,7 +306,17 @@ export function App({
   }
 
   return (
-    <main className={selection.length > 0 ? 'app app--selection' : 'app'}>
+    <main
+      className={[
+        'app',
+        // room for the filter and selection columns once the app is unlocked (AC49)
+        code && 'app--columns',
+        // room for the action bar at the bottom of narrower screens
+        selection.length > 0 && 'app--selection',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <header className="topbar">
         <div className="topbar__title">
           {/* workshop logo, cut from the header of the offer template; PC: top of the left panel */}
@@ -377,6 +413,13 @@ export function App({
                 ) : null
               })}
             </div>
+            {!listVisible && (
+              <p className="results-wait" data-testid="results-wait">
+                Suche läuft.
+                {searched.length > 1 &&
+                  ' Die Liste erscheint, sobald beide Shops geantwortet haben.'}
+              </p>
+            )}
             {noCommonTyre && (
               <p className="compare-hint" data-testid="compare-hint">
                 Kein Reifen ist in beiden Shops lagernd.
@@ -384,7 +427,11 @@ export function App({
                   ' Für den direkten Preisvergleich eine Marke wählen.'}
               </p>
             )}
-            <ResultList groups={groups} selected={selectedKeys} onToggle={toggle} />
+            <ResultList
+              groups={listVisible ? groups : []}
+              selected={selectedKeys}
+              onToggle={toggle}
+            />
           </section>
         </div>
       )}

@@ -86,7 +86,8 @@ npm run supabase:login
 npm run supabase:link
 ```
 
-3. Tabelle für die PDF-Texte anlegen (`supabase/migrations/`):
+3. Tabellen anlegen (`supabase/migrations/`: PDF-Texte und der EAN-Speicher für Göggel). Nach
+   einer neuen Migration erneut ausführen, **vor** `npm run deploy:functions`:
 
 ```bash
 npm run deploy:db
