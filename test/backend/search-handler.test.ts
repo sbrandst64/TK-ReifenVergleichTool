@@ -118,7 +118,7 @@ describe('handleSearch', () => {
     expect(adapter.mock.calls[0][0]).toEqual(validBody.query)
     expect(adapter.mock.calls[0][1]).toMatchObject({
       credentials: { user: 'goeggel-user', password: 'goeggel-secret-pw' },
-      maxOffers: 20,
+      maxOffers: 40,
     })
   })
 
