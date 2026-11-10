@@ -94,7 +94,10 @@ aufgeführt und gelten, solange niemand widerspricht.
   3. Wenn weder EAN noch Schlüssel passen, bleibt das Angebot eine eigene Gruppe. Lieber nicht
      zusammenführen als falsch zusammenführen.
 - Göggel-EANs werden per Detail-Request nur für die angezeigten Angebote geholt (E4), höchstens 4
-  gleichzeitig. **[Annahme]**
+  gleichzeitig. **[Annahme]** Einmal gelesene EANs merkt sich die App (2026-11-10): Tabelle
+  `goeggel_ean` in Supabase (Göggel-Artikelnummer → EAN, nur Service-Role, RLS ohne Policies), lokal
+  eine Datei. Die EAN eines Artikels ändert sich nicht, deshalb läuft der Eintrag nicht ab. Gemerkt
+  werden nur EANs, keine Preise, Bestände oder Suchergebnisse (Non-Goal 4 bleibt).
 - In jeder Gruppe ist das Angebot mit dem niedrigsten Endkundenpreis als **günstigstes** markiert,
   bei Gleichstand alle gleich günstigen.
 - Gruppen sind nach ihrem günstigsten Endkundenpreis aufsteigend sortiert. Jedes Angebot zeigt
@@ -247,6 +250,10 @@ In Klammern steht die Phase. „Fixture-Daten“ heißt: anonymisierte, aufgezei
 - AC16 (P2) – Ein Weichberger-Angebot, dessen Bestand in Filiale + Zentrallager unter der Stückzahl
   liegt und erst mit dem Nebenlager reicht, ist gelb markiert (gelber Tag „2–3 Tage“, siehe AC30).
 - AC17 (P2) – Gruppen sind nach ihrem günstigsten Endkundenpreis aufsteigend sortiert.
+- AC46 (P2, 2026-11-10) – Bekannte Göggel-EANs kommen aus dem EAN-Speicher; der Shop wird nur nach
+  den EANs gefragt, die dort fehlen, und diese werden danach gespeichert. Sind alle EANs bekannt,
+  geht kein Detail-Request an Göggel. Ist der Speicher nicht lesbar oder nicht schreibbar, liefert
+  die Suche trotzdem (EANs dann wie bisher vom Shop). Eine fehlende EAN wird nicht gespeichert.
 - AC45 (P2, 2026-11-10) – Jedes Weichberger-Angebot trägt die Saison aus dem Saison-Symbol seiner
   Trefferzeile (`Winter.png`, `Sommer.png`, `Ganzjahres.png`; live geprüft am 2026-11-10). Bei einem
   unbekannten Symbol bleibt die Saison leer. Die Liste zeigt die Saison wie bei Göggel, und das
@@ -397,7 +404,8 @@ Technisch, durch Spikes zu klären:
 15. ~~Göggel-Sortierung~~ geklärt: Standard ist „Nettopreis aufsteigend“ (nicht streng); „nur verfügbare“
     ist Standard, heißt aber nicht „lagernd“ (viele Treffer mit Eigenbestand 0, „ca. 3 Tage“). Der Adapter
     filtert deshalb selbst nach Stückzahl.
-18. **Göggel-EAN dauert:** Der Shop beantwortet Anfragen einer Sitzung nacheinander (≈ 0,65 s je EAN),
+18. ~~Göggel-EAN dauert~~ gelöst mit dem EAN-Speicher (AC46); die erste Suche nach neuen Artikeln
+    dauert weiter so lange. Vorher: Der Shop beantwortet Anfragen einer Sitzung nacheinander (≈ 0,65 s je EAN),
     bei 20 Angeboten ≈ 13 s zusätzlich. Optionen: EAN-Cache (Göggel-Nr → EAN) in Supabase, oder EAN nur
     per Fallback-Schlüssel abgleichen.
 19. **Wenig Überschneidung ohne Markenfilter:** Die je 20 günstigsten lagernden Reifen beider Shops sind

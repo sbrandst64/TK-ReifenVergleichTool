@@ -308,3 +308,80 @@ describe('Göggel session expiry', () => {
     expect(await codeOf(searchGoeggel(query(), deps(fetchFn)))).toBe('SESSION_EXPIRED')
   })
 })
+
+describe('Göggel EAN cache (AC46)', () => {
+  const DETAIL_EAN = '8808956238469'
+  const cache = (
+    known: Record<string, string> = {},
+    opts: { failGet?: boolean; failPut?: boolean } = {},
+  ) => {
+    const puts: Map<string, string>[] = []
+    return {
+      puts,
+      eanCache: {
+        async get(ids: string[]) {
+          if (opts.failGet) throw new Error('db down')
+          return new Map(ids.filter((i) => i in known).map((i) => [i, known[i]] as const))
+        },
+        async put(entries: Map<string, string>) {
+          if (opts.failPut) throw new Error('db down')
+          puts.push(entries)
+        },
+      },
+    }
+  }
+  const detailCalls = (calls: { form: URLSearchParams }[]) =>
+    calls.filter((c) => c.form.get('func') === 'ladeBildanzeige').map((c) => c.form.get('int'))
+  const ids = async () =>
+    (await searchGoeggel(query(), deps(shop().fetchFn))).map((o) => o.shopArticleId)
+
+  it('takes known EANs from the cache, asks the shop only for the others and stores those', async () => {
+    const [a, b, c, d] = await ids()
+    const { eanCache, puts } = cache({ [a]: '1111111111111', [b]: '2222222222222' })
+    const { fetchFn, calls } = shop()
+    const offers = await searchGoeggel(query(), { ...deps(fetchFn), eanCache })
+    const ean = (id: string) => offers.find((o) => o.shopArticleId === id)?.ean
+    expect([ean(a), ean(b), ean(c), ean(d)]).toEqual([
+      '1111111111111',
+      '2222222222222',
+      DETAIL_EAN,
+      DETAIL_EAN,
+    ])
+    expect(detailCalls(calls).sort()).toEqual([c, d].sort())
+    expect(puts).toHaveLength(1)
+    expect([...puts[0]].sort()).toEqual(
+      [
+        [c, DETAIL_EAN],
+        [d, DETAIL_EAN],
+      ].sort(),
+    )
+  })
+
+  it('asks the shop for no detail when every EAN is cached', async () => {
+    const all = await ids()
+    const { eanCache, puts } = cache(Object.fromEntries(all.map((i) => [i, '3333333333333'])))
+    const { fetchFn, calls } = shop()
+    const offers = await searchGoeggel(query(), { ...deps(fetchFn), eanCache })
+    expect(offers.every((o) => o.ean === '3333333333333')).toBe(true)
+    expect(detailCalls(calls)).toEqual([])
+    expect(puts).toEqual([])
+  })
+
+  it('still answers with EANs from the shop when the cache cannot be read or written', async () => {
+    for (const opts of [{ failGet: true }, { failPut: true }]) {
+      const { fetchFn, calls } = shop()
+      const offers = await searchGoeggel(query(), { ...deps(fetchFn), ...cache({}, opts) })
+      expect(offers).toHaveLength(4)
+      expect(offers.every((o) => o.ean === DETAIL_EAN)).toBe(true)
+      expect(detailCalls(calls)).toHaveLength(4)
+    }
+  })
+
+  it('never stores a missing EAN', async () => {
+    const { eanCache, puts } = cache()
+    const { fetchFn } = shop({ detailStatus: 500 })
+    const offers = await searchGoeggel(query(), { ...deps(fetchFn), eanCache })
+    expect(offers.every((o) => o.ean === null)).toBe(true)
+    expect(puts).toEqual([])
+  })
+})

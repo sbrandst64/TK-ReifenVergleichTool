@@ -172,3 +172,12 @@ describe('handleSearch', () => {
     expect(res.status).toBe(405)
   })
 })
+
+describe('handleSearch – EAN cache (AC46)', () => {
+  it('hands the EAN cache to the shop adapter', async () => {
+    const eanCache = { get: async () => new Map<string, string>(), put: async () => {} }
+    const adapter = vi.fn<ShopAdapter>(async () => [shopOffer])
+    await handleSearch(request(validBody), env, { adapters: { goeggel: adapter }, eanCache })
+    expect(adapter.mock.calls[0][1].eanCache).toBe(eanCache)
+  })
+})
