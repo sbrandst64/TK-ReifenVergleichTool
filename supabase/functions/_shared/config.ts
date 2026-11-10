@@ -66,7 +66,7 @@ export function loadConfig(env: Env): AppConfig {
         weichberger: shipping(env, 'SHIPPING_WEICHBERGER', undefined),
       },
     },
-    maxOffersPerShop: integer(env, 'MAX_OFFERS_PER_SHOP', 20, 1, 100),
+    maxOffersPerShop: integer(env, 'MAX_OFFERS_PER_SHOP', 40, 1, 100),
     werkstattCode,
     allowedOrigins: allowedOrigins(env),
     timeoutMs: integer(env, 'SEARCH_TIMEOUT_MS', 60000, 100, 140000),

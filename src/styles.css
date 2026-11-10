@@ -508,6 +508,16 @@ input:focus-visible {
   font-weight: 600;
 }
 
+/* both shops answered, but no tyre is in both (AC47): a calm note, not an error */
+.compare-hint {
+  margin: 10px 0 0;
+  padding: 8px 12px;
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius);
+  background: var(--panel-bg);
+  font-size: 0.9375rem;
+}
+
 /* ---------- results ---------- */
 .tyre {
   padding: 14px 0;

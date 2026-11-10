@@ -130,6 +130,17 @@ export function App({
     [shops],
   )
 
+  // Both shops answered with offers, but no tyre is in both: say so instead of leaving the user
+  // looking for a comparison that is not there (AC47).
+  const noCommonTyre =
+    lastSearch !== null &&
+    lastSearch.shops.length === SHOPS.length &&
+    SHOPS.every((s) => {
+      const state = shops[s]
+      return state.status === 'done' && state.offers.length > 0
+    }) &&
+    groups.every((g) => g.shops.length < 2)
+
   useEffect(() => {
     if (!code) return
     let current = true
@@ -366,6 +377,13 @@ export function App({
                 ) : null
               })}
             </div>
+            {noCommonTyre && (
+              <p className="compare-hint" data-testid="compare-hint">
+                Kein Reifen ist in beiden Shops lagernd.
+                {lastSearch?.query.brands.length === 0 &&
+                  ' Für den direkten Preisvergleich eine Marke wählen.'}
+              </p>
+            )}
             <ResultList groups={groups} selected={selectedKeys} onToggle={toggle} />
           </section>
         </div>
