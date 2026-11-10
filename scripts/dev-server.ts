@@ -7,9 +7,12 @@ import { createServer } from 'node:http'
 import { handleCart } from '../supabase/functions/_shared/cart-handler.ts'
 import { handleSearch } from '../supabase/functions/_shared/search-handler.ts'
 import { handleSettings } from '../supabase/functions/_shared/settings-handler.ts'
+import { fileEanCache } from './file-ean-cache.ts'
 import { fileSettingsStore } from './file-settings-store.ts'
 
 const port = Number(process.env.DEV_API_PORT ?? 8787)
+// Göggel EANs are kept in supabase/.dev-ean-cache.json (git-ignored) instead of the Supabase table.
+const eanCache = fileEanCache(process.env.DEV_EAN_CACHE_FILE ?? 'supabase/.dev-ean-cache.json')
 const settingsStore = fileSettingsStore(
   process.env.DEV_SETTINGS_FILE ?? 'supabase/.dev-settings.json',
 )
@@ -42,7 +45,7 @@ createServer(async (req, res) => {
         ? await handleSettings(request, process.env, settingsStore)
         : path === '/functions/v1/cart'
           ? await handleCart(request, process.env)
-          : await handleSearch(request, process.env)
+          : await handleSearch(request, process.env, { eanCache })
     res.writeHead(response.status, Object.fromEntries(response.headers))
     res.end(Buffer.from(await response.arrayBuffer()))
   } catch (e) {

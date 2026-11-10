@@ -5,6 +5,7 @@
 // JsonInsertIntoBasket per article. Nothing else of the basket/order area is reachable.
 import { parseHTML } from 'linkedom'
 import type { Credentials } from '../config.ts'
+import type { EanCache } from '../ean-cache.ts'
 import { ShopSession, type HttpResult } from '../http-session.ts'
 import { parseWeichbergerDescription } from '../tire.ts'
 import {
@@ -23,6 +24,8 @@ export interface AdapterDeps {
   maxOffers: number
   fetchFn?: typeof fetch
   timeoutMs?: number
+  /** Remembered Göggel EANs (AC46); only the Göggel search uses it. */
+  eanCache?: EanCache
 }
 
 export const WEICHBERGER_BASE = 'https://b2b.weichberger.at'

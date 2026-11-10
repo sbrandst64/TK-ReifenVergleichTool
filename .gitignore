@@ -12,5 +12,6 @@ dist/
 coverage/
 supabase/.temp/
 supabase/.dev-settings.json
+supabase/.dev-ean-cache.json
 .vitest/
 .impeccable/

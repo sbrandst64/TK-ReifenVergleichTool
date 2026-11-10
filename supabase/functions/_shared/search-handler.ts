@@ -3,6 +3,7 @@
 import { searchGoeggel } from './adapters/goeggel.ts'
 import { searchWeichberger, type AdapterDeps } from './adapters/weichberger.ts'
 import { loadConfig, type AppConfig } from './config.ts'
+import type { EanCache } from './ean-cache.ts'
 import {
   corsHeaders as cors,
   isInt,
@@ -28,6 +29,8 @@ export type ShopAdapter = (query: SearchQuery, deps: AdapterDeps) => Promise<Sho
 export interface HandlerDeps {
   adapters?: Partial<Record<ShopId, ShopAdapter>>
   fetchFn?: typeof fetch
+  /** Remembered Göggel EANs (AC46); without it every EAN is read from the shop. */
+  eanCache?: EanCache
 }
 
 const DEFAULT_ADAPTERS: Record<ShopId, ShopAdapter> = {
@@ -118,6 +121,7 @@ export async function handleSearch(
         maxOffers: config.maxOffersPerShop,
         fetchFn: deps.fetchFn,
         timeoutMs: Math.min(PER_REQUEST_TIMEOUT_MS, config.timeoutMs),
+        eanCache: deps.eanCache,
       }),
       config.timeoutMs,
     )

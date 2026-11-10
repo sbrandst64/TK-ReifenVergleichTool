@@ -6,6 +6,7 @@
 // whole page form with the quantity in that row → the shop answers with the cart page.
 import { parseHTML } from 'linkedom'
 import type { Credentials } from '../config.ts'
+import type { EanCache } from '../ean-cache.ts'
 import { ShopSession } from '../http-session.ts'
 import { normalizeToken, parseGoeggelSize, parseLoadSpeed, seasonFromGoeggelIcon } from '../tire.ts'
 import {
@@ -232,7 +233,35 @@ async function searchCombo(
   return [...stocked.values()]
 }
 
-async function fillEans(session: ShopSession, offers: ShopOffer[]): Promise<void> {
+/**
+ * EANs for the offers (AC46): known ones from the cache, the others from the shop's detail layer
+ * (about 0.65 s each, the shop answers a session's requests one after another), and those are
+ * stored for the next search. The cache is a speed-up only: if it fails, the shop is asked.
+ */
+async function fillEans(
+  session: ShopSession,
+  offers: ShopOffer[],
+  cache?: EanCache,
+): Promise<void> {
+  let known = new Map<string, string>()
+  try {
+    known = (await cache?.get(offers.map((o) => o.shopArticleId))) ?? known
+  } catch {
+    console.warn('goeggel: EAN cache not readable')
+  }
+  for (const o of offers) o.ean = known.get(o.shopArticleId) ?? null
+  const missing = offers.filter((o) => o.ean === null)
+  await fetchEans(session, missing)
+  const fresh = new Map(missing.flatMap((o) => (o.ean ? [[o.shopArticleId, o.ean] as const] : [])))
+  if (fresh.size === 0) return
+  try {
+    await cache?.put(fresh)
+  } catch {
+    console.warn('goeggel: EAN cache not writable')
+  }
+}
+
+async function fetchEans(session: ShopSession, offers: ShopOffer[]): Promise<void> {
   for (let i = 0; i < offers.length; i += DETAIL_CONCURRENCY) {
     await Promise.all(
       offers.slice(i, i + DETAIL_CONCURRENCY).map(async (o) => {
@@ -260,7 +289,7 @@ export async function searchGoeggel(query: SearchQuery, deps: AdapterDeps): Prom
     timeoutMs: deps.timeoutMs,
   })
   await login(session, deps.credentials)
-  return runGoeggelSearch(session, query, deps.maxOffers)
+  return runGoeggelSearch(session, query, deps.maxOffers, deps.eanCache)
 }
 
 /** Search part only, for an already logged-in session. */
@@ -268,6 +297,7 @@ export async function runGoeggelSearch(
   session: ShopSession,
   query: SearchQuery,
   maxOffers: number,
+  eanCache?: EanCache,
 ): Promise<ShopOffer[]> {
   const all = new Map<string, ShopOffer>()
   for (const combo of searchCombos(query)) {
@@ -276,7 +306,7 @@ export async function runGoeggelSearch(
     }
   }
   const offers = [...all.values()].sort((a, b) => a.netEkCents - b.netEkCents).slice(0, maxOffers)
-  await fillEans(session, offers)
+  await fillEans(session, offers, eanCache)
   return offers
 }
 
