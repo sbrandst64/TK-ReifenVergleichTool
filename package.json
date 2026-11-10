@@ -19,7 +19,7 @@
     "oeamtc:import": "node scripts/oeamtc-import.ts",
     "supabase:login": "npx --yes supabase@2.122.0 login",
     "supabase:link": "npx --yes supabase@2.122.0 link",
-    "deploy:db": "npx --yes supabase@2.122.0 db push",
+    "deploy:db": "npx --yes supabase@2.122.0 db push --linked",
     "deploy:secrets": "npx --yes supabase@2.122.0 secrets set --env-file supabase/functions/.env.production",
     "deploy:functions": "npx --yes supabase@2.122.0 functions deploy search settings cart"
   },

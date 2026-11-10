@@ -116,9 +116,9 @@ npm run deploy:functions
 curl -i -X POST https://<projekt>.supabase.co/functions/v1/search -H "content-type: application/json" -H "x-werkstatt-code: falsch" -d "{}"
 ```
 
-Danach eine echte Suche in der Oberfläche. **Offen:** Ob die Shops Anfragen aus einem Supabase-
-Rechenzentrum zulassen, ist noch nicht geprüft (Spec §7, Spike). Zeigt die UI „Shop blockiert
-Anfragen“, liegt es daran.
+Danach eine echte Suche in der Oberfläche. Am 2026-11-10 geprüft: Beide Shops lassen Anfragen aus
+Supabase Frankfurt zu (Weichberger ca. 7 s, Göggel ca. 17 s). Zeigt die UI später „Shop blockiert
+Anfragen“, hat ein Shop das geändert.
 
 ### 2. GitHub (einmalig)
 

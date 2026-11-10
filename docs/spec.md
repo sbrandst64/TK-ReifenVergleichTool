@@ -380,7 +380,8 @@ Bitte bestätigen oder ändern (**[Annahme]**-Punkte):
 
 Technisch, durch Spikes zu klären:
 
-12. Werden Requests aus Supabase-Rechenzentrums-IPs geblockt? (Spike Phase 1)
+12. ~~Werden Requests aus Supabase-Rechenzentrums-IPs geblockt?~~ Nein: Am 2026-11-10 lieferte eine
+    echte Suche über das Projekt in Frankfurt bei beiden Shops 20 Angebote.
 13. Bleibt der Warenkorb nach neuem Login erhalten (Weichberger unbekannt, Göggel wahrscheinlich)?
     Beendet ein zweiter Login mit demselben Account die erste Session (z. B. die des Onkels im Browser)?
     (Spike Phase 3)
