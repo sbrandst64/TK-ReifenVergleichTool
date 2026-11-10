@@ -279,18 +279,18 @@ describe('searchWeichberger', () => {
 })
 
 describe('Weichberger season (AC45)', () => {
-  const withIcon = (icon: string) =>
-    parseWeichbergerResults(P1.replaceAll('Images/Winter.png', `Images/${icon}`))
+  const season = (html: string, description: string) =>
+    parseWeichbergerResults(html).find((o) => o.description.includes(description))?.season
 
   it('reads the season of every tyre from the season icon of its row', () => {
-    const offers = parseWeichbergerResults(P1)
-    expect(offers.length).toBeGreaterThan(0)
-    expect(offers.map((o) => o.season)).toEqual(offers.map(() => 'winter'))
-    expect(withIcon('Sommer.png').every((o) => o.season === 'sommer')).toBe(true)
-    expect(withIcon('Ganzjahres.png').every((o) => o.season === 'ganzjahr')).toBe(true)
+    expect(season(P1, 'EUROWINTER HS02 91H')).toBe('winter')
+    expect(season(P1, 'POWERPROOF 2')).toBe('sommer')
+    expect(season(P1, 'TURANZA ALL SEASON 6')).toBe('ganzjahr')
+    expect(parseWeichbergerResults(P1).every((o) => o.season !== null)).toBe(true)
   })
 
   it('gives no season for an unknown icon instead of guessing', () => {
-    expect(withIcon('Neu.png').every((o) => o.season === null)).toBe(true)
+    const unknown = P1.replace(/Images\/(Winter|Sommer|Ganzjahres)\.png/g, 'Images/Neu.png')
+    expect(parseWeichbergerResults(unknown).every((o) => o.season === null)).toBe(true)
   })
 })

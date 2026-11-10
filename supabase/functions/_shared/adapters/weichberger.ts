@@ -112,11 +112,23 @@ export function parseWeichbergerResults(html: string): ShopOffer[] {
       stockImmediate: branch + central,
       stockTotal: branch + central + secondary,
       deliveryNote: '',
-      season: null,
+      season: seasonFromIcon(article.innerHTML),
       netEkCents: net,
     })
   }
   return offers
+}
+
+const SEASON_ICON: Record<string, Season> = {
+  winter: 'winter',
+  sommer: 'sommer',
+  ganzjahres: 'ganzjahr',
+}
+
+/** Season from the icon of a result row (AC45); null for an icon we do not know. */
+function seasonFromIcon(articleHtml: string): Season | null {
+  const name = articleHtml.match(/Content\/Images\/(Winter|Sommer|Ganzjahres)\.png/i)?.[1]
+  return name ? SEASON_ICON[name.toLowerCase()] : null
 }
 
 export function parseWeichbergerPageCount(footerHtml: string): number {
