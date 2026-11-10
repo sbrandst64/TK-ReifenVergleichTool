@@ -85,15 +85,25 @@ describe('buildOfferModel', () => {
     expect(m.total).toBe('487,40')
   })
 
-  it('AC34: several tyres are alternatives for the customer → no total over all lines', () => {
+  it('AC34: several tyres → total = sum of pieces × unit price over all lines', () => {
     const m = buildOfferModel(
       [
         { offer: front, quantity: 2 },
-        { offer: rear, quantity: 2 },
+        { offer: rear, quantity: 4 },
       ],
       today,
     )
-    expect(m.total).toBe('')
+    const expected = 2 * front.priceGrossCents + 4 * rear.priceGrossCents
+    expect(m.total).toBe(formatAmount(expected))
+  })
+
+  it('AC34: the sum is exact in cents, also with four-digit totals', () => {
+    const items = [1, 2, 3].map((i) => ({
+      offer: { ...front, priceGrossCents: 33333 * i + 1 },
+      quantity: 4,
+    }))
+    // 4 × (33334 + 66667 + 100000) = 800004 cents
+    expect(buildOfferModel(items, today).total).toBe('8.000,04')
   })
 })
 

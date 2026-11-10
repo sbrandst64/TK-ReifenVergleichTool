@@ -170,8 +170,8 @@ aufgeführt und gelten, solange niemand widerspricht.
   - Je gewähltem Reifen eine Zeile: „Marke Profil“ in Shop-Schreibweise, Dimension mit LI/SI, Stück,
     VK-Preis/Stück = Endkundenpreis aus der App (deckt Montage, Wuchten, Entsorgung ab). Mehr als
     6 Zeilen → die Liste läuft auf weitere Seiten weiter.
-  - Die Zeilen sind **Alternativen** für den Kunden (Wunsch 2026-11-07). **Gesamtpreis** nur bei
-    genau einem Reifen (Stück × VK-Preis/Stück); bei mehreren bleibt das Feld leer und ausfüllbar.
+  - **Gesamtpreis** = Summe aller Zeilen (Stück × VK-Preis/Stück), damit sofort ein Preis dasteht
+    (Wunsch 2026-11-10; vorher galten mehrere Zeilen als Alternativen ohne Summe).
   - Darunter nur zur Information, **nicht** im Gesamtpreis: „zusätzlich“ Räder umstecken PKW bis 17"
     € 34,-; SUV/LLKW/ab 18" € 36,-; einlagern € 32,-; waschen (maschinell) € 15,-; TPMS Diagnose
     € 15,- sowie „*Angebot nur an diesem Tag gültig, da Preisschwankungen bestehen“.
@@ -311,8 +311,8 @@ In Klammern steht die Phase. „Fixture-Daten“ heißt: anonymisierte, aufgezei
 - AC33 (P5) – Das PDF hat je gewähltem Reifen eine Zeile mit Bezeichnung, Dimension mit LI/SI, Stück
   und VK-Preis/Stück in der Reihenfolge der Auswahl. Bei mehr als 6 Zeilen hat es mehrere Seiten,
   und keine Zeile fehlt. Die Saison-Kästchen der gewählten Reifen sind angehakt, die anderen nicht.
-- AC34 (P5) – Bei genau einem Reifen ist der Gesamtpreis Stück × VK-Preis/Stück; bei mehreren
-  (Alternativen) ist das Feld leer und ausfüllbar. Die Zusatzpreise (umstecken, einlagern, waschen,
+- AC34 (P5) – Der Gesamtpreis ist die Summe über alle Zeilen von Stück × VK-Preis/Stück, bei einem
+  wie bei mehreren Reifen. Das Feld bleibt änderbar. Die Zusatzpreise (umstecken, einlagern, waschen,
   TPMS) gehen nie ein.
 - AC35 (P5) – Beim Erstellen des PDFs geht keine Anfrage an die Such-API, und keine Anfrage enthält
   Kundendaten.

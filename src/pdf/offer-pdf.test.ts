@@ -44,7 +44,7 @@ describe('createOfferPdf', () => {
     expect(form.getTextField('stueck').getText()).toBe('4')
   })
 
-  it('AC33/AC34: one editable row per tyre, season boxes; total left empty but fillable for alternatives', async () => {
+  it('AC33/AC34: one editable row per tyre, season boxes; total sums all rows and stays editable', async () => {
     const form = (await render(2)).getForm()
     expect(form.getTextField('zeile1_reifen').getText()).toBe('Testmarke P1')
     expect(form.getTextField('zeile1_dimension').getText()).toBe('205/55 R16 91H')
@@ -54,7 +54,7 @@ describe('createOfferPdf', () => {
     expect(form.getCheckBox('saison_winter').isChecked()).toBe(true)
     expect(form.getCheckBox('saison_sommer').isChecked()).toBe(false)
     expect(form.getCheckBox('saison_ganzjahr').isChecked()).toBe(false)
-    expect(form.getTextField('gesamtpreis').getText() ?? '').toBe('')
+    expect(form.getTextField('gesamtpreis').getText()).toBe('800,04')
     expect(form.getTextField('gesamtpreis').isReadOnly()).toBe(false)
   })
 
@@ -81,7 +81,8 @@ describe('createOfferPdf', () => {
     expect(page).toContain(hex('Firma:'))
     expect(page).toContain(hex('Felgen lackieren'))
     expect(page).not.toContain(hex('Räder einlagern:'))
-    expect(doc.getForm().getTextField('gesamtpreis').getText() ?? '').toBe('')
+    // extras are information only: the total is the tyres alone
+    expect(doc.getForm().getTextField('gesamtpreis').getText()).toBe('800,04')
   })
 
   it('copes with very long and non-Latin texts (shrinks, never throws)', async () => {
