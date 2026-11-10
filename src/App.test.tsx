@@ -209,6 +209,68 @@ describe('App', () => {
     expect(rows[1]).not.toHaveTextContent('Günstigster')
   })
 
+  describe('AC47: hint when no tyre is in both shops', () => {
+    const HINT = 'Kein Reifen ist in beiden Shops lagernd.'
+    const ADVICE = 'Für den direkten Preisvergleich eine Marke wählen.'
+    const different = () =>
+      searchWith({
+        goeggel: async () => ok('goeggel', [offer({ profile: 'A' })]),
+        weichberger: async () => ok('weichberger', [offer({ shop: 'weichberger', profile: 'B' })]),
+      })
+
+    it('says so and suggests a brand when both shops answered with different tyres', async () => {
+      await renderAndSearch(different())
+      expect(await screen.findByTestId('compare-hint')).toHaveTextContent(`${HINT} ${ADVICE}`)
+    })
+
+    it('leaves the advice out when a brand is already chosen', async () => {
+      localStorage.setItem('werkstatt-code', 'abc')
+      const user = userEvent.setup()
+      render(<App search={different()} />)
+      await user.click(screen.getByRole('button', { name: /MICHELIN/ }))
+      await user.click(screen.getByRole('button', { name: 'Suchen' }))
+      const hint = await screen.findByTestId('compare-hint')
+      expect(hint).toHaveTextContent(HINT)
+      expect(hint).not.toHaveTextContent(ADVICE)
+    })
+
+    it('stays away when a tyre is in both shops', async () => {
+      await renderAndSearch(
+        searchWith({
+          goeggel: async () => ok('goeggel', [offer({ ean: '111' }), offer({ profile: 'A' })]),
+          weichberger: async () => ok('weichberger', [offer({ shop: 'weichberger', ean: '111' })]),
+        }),
+      )
+      await screen.findByText('Weichberger: 1 Angebot')
+      expect(screen.queryByTestId('compare-hint')).toBeNull()
+    })
+
+    it('stays away while a shop is loading, when a shop has nothing, and for a single shop', async () => {
+      const one = async () => ok('goeggel', [offer()])
+      await renderAndSearch(searchWith({ goeggel: one, weichberger: never }))
+      await screen.findByText('Göggel: 1 Angebot')
+      expect(screen.queryByTestId('compare-hint')).toBeNull()
+
+      const user = userEvent.setup()
+      await user.click(screen.getByRole('button', { name: 'Ändern' }))
+      // weichberger answers with nothing now
+      await user.click(
+        within(screen.getByRole('group', { name: 'Anbieter' })).getByRole('button', {
+          name: 'Göggel',
+        }),
+      )
+      await user.click(screen.getByRole('button', { name: 'Suchen' }))
+      await screen.findByText('Göggel: 1 Angebot')
+      expect(screen.queryByTestId('compare-hint')).toBeNull()
+    })
+
+    it('stays away when one shop has no offers', async () => {
+      await renderAndSearch(searchWith({ goeggel: async () => ok('goeggel', [offer()]) }))
+      await screen.findByText(/Weichberger: Keine lagernden Reifen/)
+      expect(screen.queryByTestId('compare-hint')).toBeNull()
+    })
+  })
+
   it('AC28: every offer row shows its shop logo on a shop-coloured badge', async () => {
     await renderAndSearch(
       searchWith({

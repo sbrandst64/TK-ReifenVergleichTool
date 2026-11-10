@@ -64,7 +64,9 @@ aufgeführt und gelten, solange niemand widerspricht.
   N lagernde Angebote gefunden sind. Die Shop-Reihenfolge ist nicht streng (Göggel: z. B. 41,03 vor
   41,00), deshalb sortiert der Adapter das Ergebnis selbst nach Netto-EK.
 - Pro Shop werden höchstens **N** passende Angebote geholt, über so viele Seiten wie nötig.
-  N = 20, einstellbar als Function-Secret `MAX_OFFERS_PER_SHOP`. **[Annahme]**
+  N = 40, einstellbar als Function-Secret `MAX_OFFERS_PER_SHOP`. **[Annahme]** (bis 2026-11-10: 20.
+  Messung 205/55 R16 ohne Filter: bei 20 je Shop 0 gemeinsame Reifen, bei 40 sind es 5; Weichberger
+  braucht dafür rund 9 s statt 7 s.)
 - **Marke** und **Saison** werden nur an die Shops übergeben, wenn mindestens ein Tag aktiv ist (E10).
 
 ### 3.2 Preis (Phase 1)
@@ -250,6 +252,10 @@ In Klammern steht die Phase. „Fixture-Daten“ heißt: anonymisierte, aufgezei
 - AC16 (P2) – Ein Weichberger-Angebot, dessen Bestand in Filiale + Zentrallager unter der Stückzahl
   liegt und erst mit dem Nebenlager reicht, ist gelb markiert (gelber Tag „2–3 Tage“, siehe AC30).
 - AC17 (P2) – Gruppen sind nach ihrem günstigsten Endkundenpreis aufsteigend sortiert.
+- AC47 (P2, 2026-11-10) – Haben beide Shops Angebote geliefert und ist kein Reifen in beiden Shops
+  dabei, steht über der Liste „Kein Reifen ist in beiden Shops lagernd.“; ohne Marken-Tag zusätzlich
+  „Für den direkten Preisvergleich eine Marke wählen.“ Der Hinweis fehlt, solange ein Shop lädt, wenn
+  ein Shop nichts oder einen Fehler liefert und wenn nur ein Shop gesucht wurde.
 - AC46 (P2, 2026-11-10) – Bekannte Göggel-EANs kommen aus dem EAN-Speicher; der Shop wird nur nach
   den EANs gefragt, die dort fehlen, und diese werden danach gespeichert. Sind alle EANs bekannt,
   geht kein Detail-Request an Göggel. Ist der Speicher nicht lesbar oder nicht schreibbar, liefert
@@ -386,7 +392,7 @@ Klärung durch den Nutzer bzw. Onkel:
 
 Bitte bestätigen oder ändern (**[Annahme]**-Punkte):
 
-7. N = 20 Angebote pro Shop.
+7. N = 40 Angebote pro Shop (seit 2026-11-10, vorher 20).
 8. Stückzahl-Tags 1 · 2 · 4 · 6 · 8 (3, 5, 7 nicht wählbar), Standard 4.
 9. Größen-Dropdowns als feste Listen (Zoll 13–23 ganzzahlig); welche Marken-Tags ohne „Alle Marken
    anzeigen“ sichtbar sind.
@@ -408,7 +414,7 @@ Technisch, durch Spikes zu klären:
     dauert weiter so lange. Vorher: Der Shop beantwortet Anfragen einer Sitzung nacheinander (≈ 0,65 s je EAN),
     bei 20 Angeboten ≈ 13 s zusätzlich. Optionen: EAN-Cache (Göggel-Nr → EAN) in Supabase, oder EAN nur
     per Fallback-Schlüssel abgleichen.
-19. **Wenig Überschneidung ohne Markenfilter:** Die je 20 günstigsten lagernden Reifen beider Shops sind
+19. **Wenig Überschneidung ohne Markenfilter** (gemildert am 2026-11-10: N = 40 und Hinweis AC47): Die je 20 günstigsten lagernden Reifen beider Shops sind
     in der Praxis oft verschiedene Produkte (Test 205/55 R16: 0 gemeinsame Karten; mit BRIDGESTONE 7).
 16. Stimmen die Markennamen der beiden Shops überein, oder braucht die Zuordnungstabelle Einträge?
 17. Können die Shops mehrere Marken bzw. Saisonen in einer Abfrage filtern? Sonst gilt eine Abfrage

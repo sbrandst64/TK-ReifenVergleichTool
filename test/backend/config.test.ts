@@ -11,7 +11,7 @@ describe('loadConfig', () => {
     expect(c.pricing.roundingCents).toBe(10)
     expect(c.pricing.shipping.goeggel).toEqual({ freeFrom: 2, perUnitCents: 650 })
     expect(c.pricing.shipping.weichberger).toBeNull()
-    expect(c.maxOffersPerShop).toBe(20)
+    expect(c.maxOffersPerShop).toBe(40)
     expect(c.timeoutMs).toBe(60000)
     expect(c.allowedOrigins).toEqual(['http://localhost:5173'])
     expect(c.credentials).toEqual({ weichberger: null, goeggel: null })
