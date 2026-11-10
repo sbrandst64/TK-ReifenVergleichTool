@@ -260,7 +260,7 @@ function drawFooter(page: PDFPage, ctx: Ctx, model: OfferModel) {
       size: 13,
       bold: true,
       align: TextAlignment.Right,
-      // several tyres are alternatives: empty, highlighted field for the price the customer picks
+      // highlighted only if there is no sum to show
       hint: model.total === '',
     },
   )

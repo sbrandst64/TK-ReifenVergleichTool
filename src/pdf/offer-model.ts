@@ -18,11 +18,11 @@ export interface OfferLine {
 export interface OfferModel {
   date: string
   dimension: string
-  /** Every quantity of the lines once, e.g. "2" or "2, 4" – the lines are alternatives, no sum. */
+  /** Every quantity of the lines once, e.g. "2" or "2, 4". */
   pieces: string
   seasons: Record<Season, boolean>
   lines: OfferLine[]
-  /** Only for a single tyre; with several (alternatives for the customer) it stays empty (AC34). */
+  /** Sum of pieces × unit price over all lines (AC34); the extra prices never count. */
   total: string
 }
 
@@ -38,7 +38,6 @@ export function formatAmount(cents: number): string {
 const sizeOf = (o: TireOffer) => `${o.width}/${o.height} R${o.rim}`
 
 export function buildOfferModel(items: SelectedTyre[], today: Date): OfferModel {
-  const only = items.length === 1 ? items[0] : null
   const seasons: Record<Season, boolean> = { sommer: false, winter: false, ganzjahr: false }
   for (const { offer } of items) if (offer.season) seasons[offer.season] = true
   return {
@@ -52,7 +51,9 @@ export function buildOfferModel(items: SelectedTyre[], today: Date): OfferModel 
       quantity,
       unitPrice: formatAmount(offer.priceGrossCents),
     })),
-    total: only ? formatAmount(only.quantity * only.offer.priceGrossCents) : '',
+    total: items.length
+      ? formatAmount(items.reduce((sum, i) => sum + i.quantity * i.offer.priceGrossCents, 0))
+      : '',
   }
 }
 
