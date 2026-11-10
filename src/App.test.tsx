@@ -11,6 +11,10 @@ import type {
 } from '../supabase/functions/_shared/types.ts'
 import { UnauthorizedError, type CartFn, type SearchFn, type SettingsApi } from './api.ts'
 import { App } from './App.tsx'
+import { seasonForDate } from './season-default.ts'
+
+// The season preset depends on today's date (AC54); tests start without one unless they set it.
+vi.mock('./season-default.ts', () => ({ seasonForDate: vi.fn(() => []) }))
 
 // No network in tests: the default settings service answers with the template texts.
 vi.mock('./api.ts', async (importOriginal) => ({
@@ -299,6 +303,162 @@ describe('App', () => {
     expect(rows[0]).toHaveTextContent(/107,00/)
     expect(within(rows[1]).getByRole('img', { name: 'Weichberger' })).toBeInTheDocument()
     expect(rows[1]).not.toHaveTextContent('Günstigster')
+  })
+
+  describe('AC51: price of the whole set next to the unit price', () => {
+    it('shows pieces × unit price for the searched quantity', async () => {
+      await renderAndSearch(searchWith({ goeggel: async () => ok('goeggel', [offer()]) }))
+      const row = within(await screen.findByRole('article')).getByRole('listitem')
+      expect(row).toHaveTextContent(/107,00/)
+      expect(row.querySelector('.offer__set')).toHaveTextContent(/^4 Stk: €\s428,00$/)
+    })
+
+    it('leaves it out for a single tyre', async () => {
+      localStorage.setItem('werkstatt-code', 'abc')
+      const user = userEvent.setup()
+      render(<App search={searchWith({ goeggel: async () => ok('goeggel', [offer()]) })} />)
+      await user.click(
+        within(screen.getByRole('group', { name: 'Stückzahl' })).getByRole('button', { name: '1' }),
+      )
+      await user.click(screen.getByRole('button', { name: 'Suchen' }))
+      const row = within(await screen.findByRole('article')).getByRole('listitem')
+      expect(row.querySelector('.offer__set')).toBeNull()
+    })
+  })
+
+  describe('AC52: sorting and filtering the list', () => {
+    const conti = { brand: 'CONTINENTAL', profile: 'WinterContact TS 870' } // ÖAMTC 2,0 in 205/55 R16
+    const mixed = () =>
+      searchWith({
+        goeggel: async () =>
+          ok('goeggel', [
+            offer({ ean: '111', priceGrossCents: 10700 }),
+            offer({ ...conti, priceGrossCents: 15000 }),
+          ]),
+        weichberger: async () =>
+          ok('weichberger', [
+            offer({
+              shop: 'weichberger',
+              ean: '111',
+              priceGrossCents: 11300,
+              delayed: true,
+              deliveryNote: 'Nebenlager (2–3 Tage)',
+            }),
+          ]),
+      })
+    const titles = () => screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)
+    const tool = (name: string) =>
+      within(screen.getByRole('region', { name: 'Liste sortieren und filtern' })).getByRole(
+        'button',
+        { name },
+      )
+
+    it('is not there without a list', async () => {
+      await renderAndSearch(searchWith({}))
+      await screen.findAllByText(/Keine lagernden Reifen/)
+      expect(screen.queryByRole('region', { name: 'Liste sortieren und filtern' })).toBeNull()
+    })
+
+    it('starts with the cheapest first and nothing hidden', async () => {
+      await renderAndSearch(mixed())
+      await screen.findAllByRole('article')
+      expect(titles()).toEqual(['KUMHO ES31', 'CONTINENTAL WinterContact TS 870'])
+      expect(tool('Preis')).toHaveAttribute('aria-pressed', 'true')
+      expect(tool('ÖAMTC-Note')).toHaveAttribute('aria-pressed', 'false')
+      expect(tool('In beiden Shops')).toHaveAttribute('aria-pressed', 'false')
+      expect(tool('Sofort lagernd')).toHaveAttribute('aria-pressed', 'false')
+      expect(screen.getByTestId('list-count')).toHaveTextContent('2 Reifen')
+    })
+
+    it('"ÖAMTC-Note" puts the best tested tyre first', async () => {
+      const user = await renderAndSearch(mixed())
+      await screen.findAllByRole('article')
+      await user.click(tool('ÖAMTC-Note'))
+      expect(titles()).toEqual(['CONTINENTAL WinterContact TS 870', 'KUMHO ES31'])
+      expect(tool('Preis')).toHaveAttribute('aria-pressed', 'false')
+    })
+
+    it('"In beiden Shops" and "Sofort lagernd" narrow the list and say how many are left', async () => {
+      const user = await renderAndSearch(mixed())
+      await screen.findAllByRole('article')
+      await user.click(tool('In beiden Shops'))
+      expect(titles()).toEqual(['KUMHO ES31'])
+      expect(screen.getByTestId('list-count')).toHaveTextContent('1 von 2 Reifen')
+
+      // the Weichberger offer needs the slower stock: with it gone, no tyre is in both shops
+      await user.click(tool('Sofort lagernd'))
+      expect(screen.queryByRole('article')).toBeNull()
+      expect(screen.getByText('Kein Reifen passt zu diesen Filtern.')).toBeInTheDocument()
+
+      await user.click(tool('In beiden Shops'))
+      expect(titles()).toEqual(['KUMHO ES31', 'CONTINENTAL WinterContact TS 870'])
+      expect(within(screen.getAllByRole('article')[0]).getAllByRole('listitem')).toHaveLength(1)
+    })
+  })
+
+  describe('AC53: recently searched sizes', () => {
+    const recent = () => screen.queryByRole('group', { name: 'Zuletzt gesucht' })
+    const sizes = () =>
+      within(recent()!)
+        .getAllByRole('button')
+        .map((b) => b.textContent)
+
+    it('offers the searched sizes as buttons, newest first, and searches on a tap', async () => {
+      localStorage.setItem('werkstatt-code', 'abc')
+      const search = searchWith({})
+      const user = userEvent.setup()
+      render(<App search={search} />)
+      expect(recent()).toBeNull()
+
+      await user.click(screen.getByRole('button', { name: 'Suchen' }))
+      expect(sizes()).toEqual(['205/55 R16'])
+
+      await user.selectOptions(screen.getByLabelText('Breite'), '225')
+      await user.selectOptions(screen.getByLabelText('Höhe'), '45')
+      await user.selectOptions(screen.getByLabelText('Zoll'), '17')
+      await user.click(screen.getByRole('button', { name: 'Suchen' }))
+      expect(sizes()).toEqual(['225/45 R17', '205/55 R16'])
+
+      search.mockClear()
+      await user.click(within(recent()!).getByRole('button', { name: '205/55 R16' }))
+      expect(search).toHaveBeenCalledWith(
+        'goeggel',
+        expect.objectContaining({ width: 205, height: 55, rim: 16 }),
+        'abc',
+      )
+      expect(screen.getByLabelText('Breite')).toHaveValue('205')
+      expect(screen.getByLabelText('Zoll')).toHaveValue('16')
+    })
+
+    it('still knows them after the page is opened again', () => {
+      localStorage.setItem('werkstatt-code', 'abc')
+      localStorage.setItem('letzte-groessen', JSON.stringify([{ width: 195, height: 65, rim: 15 }]))
+      render(<App search={searchWith({})} />)
+      expect(sizes()).toEqual(['195/65 R15'])
+    })
+  })
+
+  it('AC54: starts with the season of the date and searches with it', async () => {
+    vi.mocked(seasonForDate).mockReturnValueOnce(['winter'])
+    localStorage.setItem('werkstatt-code', 'abc')
+    const search = searchWith({})
+    const user = userEvent.setup()
+    render(<App search={search} />)
+    const seasons = screen.getByRole('group', { name: 'Saison' })
+    expect(within(seasons).getByRole('button', { name: 'Winter' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    expect(within(seasons).getByRole('button', { name: 'Sommer' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    )
+    await user.click(screen.getByRole('button', { name: 'Suchen' }))
+    expect(search).toHaveBeenCalledWith(
+      'goeggel',
+      expect.objectContaining({ seasons: ['winter'] }),
+      'abc',
+    )
   })
 
   describe('AC47: hint when no tyre is in both shops', () => {

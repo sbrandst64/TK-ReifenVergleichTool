@@ -43,6 +43,10 @@ aufgeführt und gelten, solange niemand widerspricht.
     Werte 13–23, also keine LKW-Größen. **[Annahme]**
   - **Stückzahl** als Tag-Reihe 1 · 2 · 4 · 6 · 8. Genau ein Tag ist aktiv, Standard 4. **[Annahme]** (Werte)
   - **Saison** als Tags Sommer · Winter · Ganzjahr, mehrere wählbar. Kein Tag aktiv = alle Saisonen.
+    Beim Öffnen ist die Saison des Datums vorgewählt (Oktober bis März Winter, April bis September
+    Sommer; 2026-11-10), ein Tipp nimmt sie wieder weg (AC54).
+  - **Zuletzt gesucht** (2026-11-10): die letzten fünf gesuchten Größen als Knöpfe unter der Größe,
+    gemerkt im Browser des Geräts. Ein Tipp stellt die Größe ein und sucht sofort (AC53).
   - **Marke** als Tags, mehrere wählbar. Kein Tag aktiv = alle Marken. Feste Liste im Frontend
     (Startliste E12) mit Zuordnung je Shop-Schreibweise. Die häufigsten Marken sind sichtbar, der Rest
     hinter „Alle Marken anzeigen“. **[Annahme]** (welche zuerst sichtbar sind)
@@ -243,6 +247,22 @@ In Klammern steht die Phase. „Fixture-Daten“ heißt: anonymisierte, aufgezei
 - AC6 (P1) – Pro Shop kommen höchstens N Angebote, nach Netto-EK aufsteigend sortiert. Stehen in den Fixture-Daten mehr als N passende Angebote, werden nur die N günstigsten geliefert.
 - AC7 (P2) – Gibt es für eine Größe keine lagernden Angebote, zeigt die UI pro Shop „Keine lagernden
   Reifen in dieser Größe“.
+- AC51 (P2, 2026-11-10) – Unter dem Stückpreis jedes Angebots steht der Preis für die gesuchte
+  Stückzahl, z. B. „4 Stk: € 428,00“ (Stückzahl × Endkundenpreis). Bei Stückzahl 1 fehlt die Zeile.
+- AC52 (P2, 2026-11-10) – Über der Reifenliste lässt sie sich sortieren und eingrenzen:
+  „Preis“ (Standard, günstigster zuerst) oder „ÖAMTC-Note“ (beste Note zuerst, ungetestete Reifen am
+  Ende, gleiche Noten nach Preis); „In beiden Shops“ zeigt nur Reifen, die beide Shops anbieten;
+  „Sofort lagernd“ blendet Angebote aus, die das Nebenlager brauchen (gelber Tag), und Reifen, von
+  denen dann kein Angebot bleibt. „Günstigster“ gilt unter den sichtbaren Angeboten. Daneben steht
+  „12 von 74 Reifen“ bzw. ungefiltert „74 Reifen“; passt keiner, „Kein Reifen passt zu diesen
+  Filtern.“ Ohne Liste gibt es die Leiste nicht. Die Einstellung bleibt über weitere Suchen, bis die
+  Seite neu geladen wird.
+- AC53 (P2, 2026-11-10) – Nach jeder Suche steht die Größe vorne in „Zuletzt gesucht“ (höchstens
+  fünf, jede Größe einmal). Ein Tipp auf einen Knopf stellt Breite, Höhe und Zoll ein und startet die
+  Suche mit den übrigen Filtern. Die Liste ist nach dem erneuten Öffnen der Seite noch da. Ohne
+  bisherige Suche gibt es den Bereich nicht.
+- AC54 (P2, 2026-11-10) – Beim Öffnen ist der Saison-Tag des Datums aktiv (Oktober bis März Winter,
+  sonst Sommer), und die erste Suche filtert danach. Ein Tipp auf den Tag hebt die Vorwahl auf.
 
 **Preis** (synthetische Werte, Aufschlag 39 €, MwSt 20 %)
 - AC8 (P1) – Göggel-Angebot, Netto-EK 50,14 €, Stückzahl 4 → (50,14 + 0 + 39) × 1,2 = 106,968 → **107,00 €**.
