@@ -99,6 +99,27 @@ function ratings(): Map<string, OeamtcRating> {
   return index
 }
 
+/** Stars like a review: 5,5 − grade, so 0,5 = 5 stars and 5,5 = 0 stars, exact to a tenth. */
+export function oeamtcStars(grade: string): number {
+  const tenths = Number(grade.replace(',', ''))
+  return Math.min(50, Math.max(0, 55 - tenths)) / 10
+}
+
+const TONES = {
+  'sehr gut': 'sehr-gut',
+  gut: 'gut',
+  befriedigend: 'befriedigend',
+  genügend: 'genuegend',
+  'nicht genügend': 'nicht-genuegend',
+} as const
+
+export type GradeTone = (typeof TONES)[keyof typeof TONES]
+
+/** CSS colour name of an ÖAMTC verdict, undefined for an unknown one. */
+export function gradeTone(verdict: string): GradeTone | undefined {
+  return TONES[verdict as keyof typeof TONES]
+}
+
 /** ÖAMTC result of a tyre, or undefined when that model was not tested in that size. */
 export function oeamtcRating(tyre: {
   brand: string

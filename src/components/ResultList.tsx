@@ -1,6 +1,6 @@
 // One block per tyre, one row per shop offer (spec 3.3).
 // Row layout: phone = shop + price on line 1, delivery/stock on line 2; wide = one line.
-import { oeamtcRating } from '../oeamtc-ratings.ts'
+import { gradeTone, oeamtcRating, oeamtcStars, type OeamtcRating } from '../oeamtc-ratings.ts'
 import type { OfferGroup } from '../../supabase/functions/_shared/matching.ts'
 import type { ShopId, TireOffer } from '../../supabase/functions/_shared/types.ts'
 import { formatEuro, SHOP_LABEL } from '../messages.ts'
@@ -34,6 +34,33 @@ export function ShopBadge({ shop, mini = false }: { shop: ShopId; mini?: boolean
   )
 }
 
+/** ÖAMTC result in the offer row (AC43): logo, stars like a review, grade in the colour of its
+    verdict, test name; one link to the ÖAMTC page of this tyre. Screen only, never in the PDF. */
+function Rating({ rating }: { rating: OeamtcRating }) {
+  const summary = `ÖAMTC-Test ${rating.test}: Gesamtnote ${rating.grade} (${rating.verdict})`
+  const tone = gradeTone(rating.verdict)
+  return (
+    <a
+      className="rating"
+      href={rating.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={summary}
+      title={`${summary} – ÖAMTC-Testseite öffnen`}
+    >
+      <img className="rating__logo" src={`${import.meta.env.BASE_URL}logos/oeamtc.png`} alt="" />
+      <span className="stars" aria-hidden="true">
+        <span
+          className="stars__fill"
+          style={{ width: `${Math.round(oeamtcStars(rating.grade) * 20)}%` }}
+        />
+      </span>
+      <span className={`grade${tone ? ` grade--${tone}` : ''}`}>{rating.grade}</span>
+      <span className="rating__test">{rating.test}</span>
+    </a>
+  )
+}
+
 export const offerKey = (o: TireOffer) => `${o.shop}-${o.shopArticleId}`
 
 interface Selectable {
@@ -57,14 +84,6 @@ function TyreGroup({ group, selected, onToggle }: { group: OfferGroup } & Select
         {first.speedIndex}
         {season && ` · ${season}`}
       </p>
-      {rating && (
-        <p className="oeamtc">
-          ÖAMTC-Test {rating.test}: Gesamtnote <strong>{rating.grade}</strong> ({rating.verdict}) ·{' '}
-          <a href={rating.url} target="_blank" rel="noopener noreferrer">
-            ÖAMTC-Testseite
-          </a>
-        </p>
-      )}
       <ul className="offers">
         {group.offers.map((o) => {
           const best = compare && o.cheapest
@@ -112,6 +131,7 @@ function TyreGroup({ group, selected, onToggle }: { group: OfferGroup } & Select
                   </>
                 )}
               </span>
+              {rating && <Rating rating={rating} />}
               <span className="offer__price">{formatEuro(o.priceGrossCents)}</span>
             </li>
           )

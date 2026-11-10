@@ -25,6 +25,7 @@
   /* shop badges, taken from the shop logos */
   --shop-weichberger: #005090;
   --shop-goeggel: #000000;
+  --star: #f59e0b; /* ÖAMTC stars (AC43), decorative: the grade next to them carries the value */
   --radius: 8px;
   --tap: 44px;
   --z-sticky: 10;
@@ -89,13 +90,6 @@ body {
 .topbar__settings {
   flex: none;
   white-space: nowrap;
-}
-
-/* ÖAMTC winter test grade under the tyre name (AC43); on screen only, never in the PDF */
-.oeamtc {
-  margin: 0 0 6px;
-  color: var(--muted);
-  font-size: 0.875rem;
 }
 
 /* shop logos as links to the shops, right next to the settings button (AC42) */
@@ -546,7 +540,8 @@ input:focus-visible {
   grid-template-columns: auto 1fr auto;
   grid-template-areas:
     'sel who price'
-    'sel info info';
+    'sel info info'
+    'sel rating rating';
   align-items: baseline;
   gap: 2px 12px;
   padding: 8px 10px;
@@ -850,12 +845,129 @@ input:focus-visible {
   color: #ffffff;
 }
 
-/* wider: one line per offer, prices aligned on the right */
-@media (min-width: 640px) {
+/* ÖAMTC result in the offer row (AC43): logo, stars like a review, grade in the colour of its
+   verdict, test name; the whole group links to the ÖAMTC page. Screen only, never in the PDF. */
+.rating {
+  grid-area: rating;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.rating__logo {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+}
+
+/* five stars, the filled part clipped to the score */
+.stars {
+  position: relative;
+  display: inline-block;
+  color: var(--line-strong);
+  font-size: 1.0625rem;
+  line-height: 1;
+  letter-spacing: 1px;
+}
+
+.stars::before,
+.stars__fill::before {
+  content: '★★★★★';
+}
+
+.stars__fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  overflow: hidden;
+  color: var(--star);
+  white-space: nowrap;
+}
+
+/* grade pill: tint + border + text in the verdict's colour (text ≥ 7:1 on its tint) */
+.grade {
+  min-width: 2.75rem;
+  padding: 1px 8px;
+  border: 1px solid;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.grade--sehr-gut {
+  border-color: #16a34a;
+  background: #dcfce7;
+  color: #14532d;
+}
+
+.grade--gut {
+  border-color: #65a30d;
+  background: #ecfccb;
+  color: #365314;
+}
+
+.grade--befriedigend {
+  border-color: #ca8a04;
+  background: #fef9c3;
+  color: #713f12;
+}
+
+.grade--genuegend {
+  border-color: #ea580c;
+  background: #ffedd5;
+  color: #7c2d12;
+}
+
+.grade--nicht-genuegend {
+  border-color: #dc2626;
+  background: #fee2e2;
+  color: #7f1d1d;
+}
+
+.rating:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (hover: hover) {
+  .rating:hover .rating__test {
+    color: var(--accent);
+    text-decoration: underline;
+  }
+}
+
+/* the offer rows follow the width of the list, not the screen (filters and cart take room on PC) */
+.results {
+  container-type: inline-size;
+}
+
+/* medium: shop, delivery and price on one line, the ÖAMTC result below the delivery */
+@container (min-width: 600px) {
   .offer {
     grid-template-columns: auto minmax(9rem, 14rem) 1fr auto;
-    grid-template-areas: 'sel who info price';
+    grid-template-areas:
+      'sel who info price'
+      'sel who rating price';
     align-items: center;
+  }
+}
+
+/* wide: one line per offer; fixed columns so stars and prices line up from row to row */
+@container (min-width: 760px) {
+  .offer {
+    grid-template-columns: auto minmax(9rem, 12rem) 1fr 16.5rem minmax(6.5rem, auto);
+    grid-template-areas: 'sel who info rating price';
   }
 }
 

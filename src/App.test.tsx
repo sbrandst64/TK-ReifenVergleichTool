@@ -295,7 +295,9 @@ describe('App', () => {
     expect(r15.querySelector('.grade--gut')).toHaveTextContent('2,2')
     expect(r15).toHaveTextContent('Winter 2026')
 
-    within(row('205/55 R16')).getByRole('link', { name: 'ÖAMTC-Test Winter 2024: Gesamtnote 2,0 (gut)' })
+    within(row('205/55 R16')).getByRole('link', {
+      name: 'ÖAMTC-Test Winter 2024: Gesamtnote 2,0 (gut)',
+    })
     expect(card('195/55 R20')).not.toHaveTextContent(/ÖAMTC|Winter 20/)
     expect(card('195/55 R20').querySelector('.rating')).toBeNull()
   })
