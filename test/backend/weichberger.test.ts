@@ -277,3 +277,20 @@ describe('searchWeichberger', () => {
     expect(await codeOf(searchWeichberger(query(), deps(fetchFn)))).toBe('SESSION_EXPIRED')
   })
 })
+
+describe('Weichberger season (AC45)', () => {
+  const withIcon = (icon: string) =>
+    parseWeichbergerResults(P1.replaceAll('Images/Winter.png', `Images/${icon}`))
+
+  it('reads the season of every tyre from the season icon of its row', () => {
+    const offers = parseWeichbergerResults(P1)
+    expect(offers.length).toBeGreaterThan(0)
+    expect(offers.map((o) => o.season)).toEqual(offers.map(() => 'winter'))
+    expect(withIcon('Sommer.png').every((o) => o.season === 'sommer')).toBe(true)
+    expect(withIcon('Ganzjahres.png').every((o) => o.season === 'ganzjahr')).toBe(true)
+  })
+
+  it('gives no season for an unknown icon instead of guessing', () => {
+    expect(withIcon('Neu.png').every((o) => o.season === null)).toBe(true)
+  })
+})

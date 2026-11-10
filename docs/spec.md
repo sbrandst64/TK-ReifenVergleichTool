@@ -247,6 +247,10 @@ In Klammern steht die Phase. „Fixture-Daten“ heißt: anonymisierte, aufgezei
 - AC16 (P2) – Ein Weichberger-Angebot, dessen Bestand in Filiale + Zentrallager unter der Stückzahl
   liegt und erst mit dem Nebenlager reicht, ist gelb markiert (gelber Tag „2–3 Tage“, siehe AC30).
 - AC17 (P2) – Gruppen sind nach ihrem günstigsten Endkundenpreis aufsteigend sortiert.
+- AC45 (P2, 2026-11-10) – Jedes Weichberger-Angebot trägt die Saison aus dem Saison-Symbol seiner
+  Trefferzeile (`Winter.png`, `Sommer.png`, `Ganzjahres.png`; live geprüft am 2026-11-10). Bei einem
+  unbekannten Symbol bleibt die Saison leer. Die Liste zeigt die Saison wie bei Göggel, und das
+  Angebots-PDF hakt das passende Saison-Kästchen an.
 
 **Warenkorb**
 - AC18 (P3) – Live, mit einem Account mit Warenkorb-Recht: Nach „In den Warenkorb“ sieht der
