@@ -50,10 +50,11 @@ function searchWith(responses: Partial<Record<ShopId, () => Promise<SearchRespon
   return vi.fn<SearchFn>((shop) => (responses[shop] ?? (() => Promise.resolve(ok(shop, []))))())
 }
 
-async function renderAndSearch(search: SearchFn) {
+// holdMs 0: a shop's offers show as soon as they arrive; the hold itself is tested under AC48
+async function renderAndSearch(search: SearchFn, holdMs = 0) {
   localStorage.setItem('werkstatt-code', 'abc')
   const user = userEvent.setup()
-  render(<App search={search} />)
+  render(<App search={search} holdMs={holdMs} />)
   await user.click(screen.getByRole('button', { name: 'Suchen' }))
   return user
 }
@@ -155,6 +156,97 @@ describe('App', () => {
     )
     expect(await screen.findByRole('article')).toHaveTextContent('KUMHO')
     expect(screen.getByTestId('status-weichberger')).toHaveTextContent('lädt')
+  })
+
+  describe('AC48: the list appears in one go when the shops have answered', () => {
+    const WAIT = 'Suche läuft. Die Liste erscheint, sobald beide Shops geantwortet haben.'
+    const late = () => {
+      let answer: (r: SearchResponse) => void = () => {}
+      const search = searchWith({
+        goeggel: async () => ok('goeggel', [offer()]),
+        weichberger: () => new Promise((r) => (answer = r)),
+      })
+      const arrive = () => answer(ok('weichberger', [offer({ shop: 'weichberger', profile: 'B' })]))
+      return { search, arrive }
+    }
+
+    it('holds the first shop back until the other answers, then shows both at once', async () => {
+      const { search, arrive } = late()
+      await renderAndSearch(search, 60_000)
+      expect(await screen.findByText('Göggel: 1 Angebot')).toBeInTheDocument()
+      expect(screen.queryByRole('article')).toBeNull()
+      expect(screen.getByTestId('results-wait')).toHaveTextContent(WAIT)
+      arrive()
+      expect(await screen.findAllByRole('article')).toHaveLength(2)
+      expect(screen.queryByTestId('results-wait')).toBeNull()
+    })
+
+    it('AC4: after the hold time it shows what is there and adds the late shop', async () => {
+      const { search, arrive } = late()
+      await renderAndSearch(search, 40)
+      expect(await screen.findByRole('article')).toHaveTextContent('KUMHO')
+      expect(screen.queryByTestId('results-wait')).toBeNull()
+      expect(screen.getByTestId('status-weichberger')).toHaveTextContent('lädt')
+      arrive()
+      expect(await screen.findAllByRole('article')).toHaveLength(2)
+    })
+
+    it('shows the waiting note from the start of the search', async () => {
+      await renderAndSearch(searchWith({ goeggel: never, weichberger: never }), 60_000)
+      expect(screen.getByTestId('results-wait')).toHaveTextContent(WAIT)
+    })
+
+    it('does not wait for a shop that failed', async () => {
+      await renderAndSearch(
+        searchWith({
+          goeggel: async () => ok('goeggel', [offer()]),
+          weichberger: async () => ({
+            shop: 'weichberger',
+            offers: [],
+            error: { code: 'TIMEOUT', message: 'x' },
+          }),
+        }),
+        60_000,
+      )
+      expect(await screen.findByRole('article')).toHaveTextContent('KUMHO')
+      expect(screen.queryByTestId('results-wait')).toBeNull()
+    })
+
+    it('does not wait when only one shop is searched', async () => {
+      localStorage.setItem('werkstatt-code', 'abc')
+      const user = userEvent.setup()
+      render(
+        <App
+          search={searchWith({ goeggel: async () => ok('goeggel', [offer()]) })}
+          holdMs={60_000}
+        />,
+      )
+      await user.click(
+        within(screen.getByRole('group', { name: 'Anbieter' })).getByRole('button', {
+          name: 'Göggel',
+        }),
+      )
+      await user.click(screen.getByRole('button', { name: 'Suchen' }))
+      expect(await screen.findByRole('article')).toHaveTextContent('KUMHO')
+    })
+  })
+
+  it('AC49: the selection area is there from the start and says how to use it', () => {
+    localStorage.setItem('werkstatt-code', 'abc')
+    render(<App search={searchWith({})} />)
+    const area = screen.getByRole('region', { name: 'Auswahl' })
+    expect(area).toHaveTextContent('Noch kein Reifen ausgewählt')
+    expect(area).toHaveClass('selection--empty')
+    expect(within(area).queryByRole('button')).toBeNull()
+    // the page keeps room for the column, so ticking a tyre does not change the list width
+    expect(screen.getByRole('main')).toHaveClass('app--columns')
+    expect(screen.getByRole('main')).not.toHaveClass('app--selection')
+  })
+
+  it('AC49: no selection area and no room for it while the workshop code is asked', () => {
+    render(<App search={searchWith({})} />)
+    expect(screen.queryByRole('region', { name: 'Auswahl' })).toBeNull()
+    expect(screen.getByRole('main')).not.toHaveClass('app--columns')
   })
 
   it('shows a spinning circle instead of dots while a shop is loading', async () => {
@@ -439,12 +531,17 @@ describe('App', () => {
 
     // the selection has its own area next to the results (PC: right screen edge), not in the filters
     const bar = () => screen.getByRole('region', { name: 'Auswahl' })
+    // nothing ticked: the area only explains itself, without list and buttons (AC49)
+    const expectEmptySelection = () => {
+      expect(bar()).toHaveTextContent('Noch kein Reifen ausgewählt')
+      expect(within(bar()).queryByRole('button')).toBeNull()
+    }
     const actions = () => within(bar()).getByRole('group', { name: 'Aktionen zur Auswahl' })
     const row = (name: RegExp) => within(bar()).getByText(name).closest('li') as HTMLElement
 
     it('AC31: the selection has its own area outside the filter panel, with both buttons', async () => {
       const { user } = await setup()
-      expect(screen.queryByRole('region', { name: 'Auswahl' })).toBeNull()
+      expectEmptySelection()
       await user.click(
         await screen.findByRole('checkbox', { name: 'PIRELLI W Sotozero 3 (Göggel) auswählen' }),
       )
@@ -466,7 +563,7 @@ describe('App', () => {
 
     it('AC31: a tick keeps the tyre with its quantity, also after the next search', async () => {
       const { user } = await setup()
-      expect(screen.queryByRole('region', { name: 'Auswahl' })).toBeNull()
+      expectEmptySelection()
       await user.click(
         await screen.findByRole('checkbox', { name: 'PIRELLI W Sotozero 3 (Göggel) auswählen' }),
       )
@@ -512,7 +609,7 @@ describe('App', () => {
         within(bar()).getByRole('button', { name: 'PIRELLI W Sotozero 3 entfernen' }),
       )
       expect(box).not.toBeChecked()
-      expect(screen.queryByRole('region', { name: 'Auswahl' })).toBeNull()
+      expectEmptySelection()
 
       await user.click(box)
       await user.click(within(bar()).getByRole('button', { name: 'Auswahl aufheben' }))

@@ -55,7 +55,10 @@ aufgeführt und gelten, solange niemand widerspricht.
   Weichberger braucht dafür je Abfrage eine eigene Session, weil die Suche in der Session liegt (E3).
   Danach gilt N für den Shop insgesamt (die N günstigsten über alle Abfragen). Welche Variante ein
   Shop kann, klärt der Spike (§8).
-- Beide Shops werden parallel durchsucht (E2). Jeder Shop liefert, sobald er fertig ist.
+- Beide Shops werden parallel durchsucht (E2). Jeder Shop liefert, sobald er fertig ist; seine
+  Statuszeile erscheint sofort. Die Reifenliste erscheint in einem Zug, wenn alle gesuchten Shops
+  geantwortet haben, spätestens aber 5 s nach der ersten Antwort (2026-11-10). So sortiert sich die
+  Liste nicht um, während jemand schon darin liest oder Haken setzt.
 - **Nur lagernd** (E10): Ein Angebot erscheint nur, wenn der verfügbare Bestand ≥ Stückzahl ist.
   - Weichberger: Mengenfilter des Shops `quantity=<Stückzahl>` (E3).
   - Göggel: Der Adapter setzt „nur verfügbare“ ausdrücklich und prüft den Zustand im Filter-HTML,
@@ -223,7 +226,14 @@ In Klammern steht die Phase. „Fixture-Daten“ heißt: anonymisierte, aufgezei
 - AC3a (P1) – Sind die Saison-Tags Sommer und Ganzjahr aktiv, enthält die Liste keine Winterreifen.
   Ohne aktiven Saison-Tag gibt es keine Saison-Einschränkung.
 - AC4 (P2) – Liefert ein Shop sofort und der andere erst nach 20 s oder mit Fehler, sind die
-  Angebote des ersten Shops schon sichtbar. Für den anderen zeigt die UI Laden bzw. die Fehlermeldung.
+  Angebote des ersten Shops schon sichtbar (bei einem langsamen Shop nach der Wartezeit aus AC48,
+  bei einem Fehler sofort). Für den anderen zeigt die UI Laden bzw. die Fehlermeldung.
+- AC48 (P2, 2026-11-10) – Solange noch keine Liste zu sehen ist, steht dort „Suche läuft. Die Liste
+  erscheint, sobald beide Shops geantwortet haben.“ (bei einem Shop nur „Suche läuft.“). Hat der
+  erste Shop geantwortet, wartet die Liste höchstens 5 s auf den zweiten und zeigt dann beide
+  zusammen. Antwortet der zweite später, zeigt sie nach den 5 s den ersten Shop und ergänzt den
+  zweiten bei dessen Antwort. Auf einen Shop mit Fehler und auf einen nicht gesuchten Shop wird
+  nicht gewartet.
 - AC5 (P2) – Größe (Dropdowns) sowie Stückzahl, Saison und Marke (Tags) sind ohne Tastatur
   bedienbar und auf 375 px Breite ohne horizontales Scrollen nutzbar.
 - AC5a (P2) – Ein Tipp auf einen Saison- oder Marken-Tag schaltet ihn an oder aus, und der Zustand ist
@@ -325,7 +335,12 @@ In Klammern steht die Phase. „Fixture-Daten“ heißt: anonymisierte, aufgezei
   Stückzahl in die Auswahl (auch ohne neue Suche); spätere Filter-Änderungen ändern ihn nicht. Nach einer neuen Suche ist er weiter ausgewählt. „Auswahl aufheben“ leert sie, ein
   Entfernen-Knopf nimmt einen einzelnen Reifen heraus. Liste, „Auswahl aufheben“ und „Angebot als
   PDF“ stehen in einem eigenen Bereich „Auswahl“ außerhalb des Filters und der Reifenliste (PC ab
-  1280 px: Spalte am rechten Rand). Ohne Auswahl gibt es den Bereich nicht.
+  1280 px: Spalte am rechten Rand). Ohne Auswahl zeigt der Bereich nur einen Hinweis (AC49).
+- AC49 (P5, 2026-11-10) – Der Bereich „Auswahl“ ist da, sobald der Werkstatt-Code eingegeben ist.
+  Ohne Auswahl steht dort „Noch kein Reifen ausgewählt“ mit einer Zeile Anleitung, ohne Liste und
+  ohne Knöpfe. Am PC ab 1280 px ist die Spalte dadurch immer sichtbar, und die Reifenliste ändert
+  ihre Breite beim ersten Haken nicht (manuell: Zeilenhöhe bleibt gleich bei 1280, 1366, 1440,
+  1536 und 1920 px). Unter 1280 px ist der leere Bereich ausgeblendet.
 - AC32 (P5) – Im PDF sind Kunde, E-Mail und Tel:Nr leere Textfelder; Datum ist das heutige Datum;
   Dimension nennt jede gewählte Größe genau einmal; Stück nennt jede Stückzahl der Zeilen genau
   einmal (keine Summe).
