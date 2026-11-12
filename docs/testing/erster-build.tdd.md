@@ -67,6 +67,7 @@ Stand 2026-11-06, Branch `feat/erster-build`.
 | 14 | Filterbereich farblich abgesetzt, Logos lesbar, Tags springen nicht (AC29, manuell) | Browser bei 375, 768, 1024, 1280 px | manuell |
 | 45 | Beim ersten Haken ändern sich Breite und Zeilenhöhe der Liste nicht (AC49): gemessen bei 1440 px (Liste 721 px, alle Zeilen 54 px vor und nach dem Haken); Zeilen ohne Überlauf bei 1280, 1366, 1440, 1920 px | Browser, `getBoundingClientRect` | manuell |
 | 46 | Aktionsleiste unten statt schwebender Knöpfe (AC50): 375 px (zwei Knöpfe je 167 × 48 px, keine horizontale Scrollleiste), 768 px, 1100 px (Leiste beginnt rechts neben dem Filter) | Browser | manuell |
+| 47 | Satzpreis unter dem Stückpreis (nicht bei 1 Stk); Liste nach Preis oder ÖAMTC-Note sortieren, „In beiden Shops“ und „Sofort lagernd“ mit Zähler und Hinweis bei leerer Liste; zuletzt gesuchte Größen als Knöpfe (5, im Browser gemerkt, ein Tipp sucht); Saison nach Datum vorgewählt (AC51–AC54). RED: 12e5c0e | `src/App.test.tsx`, `src/list-view.test.ts`, `src/recent-sizes.test.ts`, `src/season-default.test.ts` | unit, component |
 
 ## Zusätzlich manuell verifiziert (nicht automatisiert)
 

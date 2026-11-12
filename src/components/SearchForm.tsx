@@ -1,5 +1,5 @@
 // Size as dropdowns, quantity/season/brand as tags (spec 3.1).
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import {
   SHOPS,
   type SearchQuery,
@@ -17,6 +17,8 @@ import {
   VISIBLE_BRANDS,
   WIDTHS,
 } from '../options.ts'
+import { sizeLabel, type TyreSize } from '../recent-sizes.ts'
+import { seasonForDate } from '../season-default.ts'
 import { TagGroup } from './TagGroup.tsx'
 
 function SizeSelect(props: {
@@ -44,29 +46,69 @@ function SizeSelect(props: {
   )
 }
 
+/** The last searched sizes as buttons (AC53); a tap sets the size and searches at once. */
+function RecentSizes({ sizes, onPick }: { sizes: TyreSize[]; onPick: (size: TyreSize) => void }) {
+  const labelId = useId()
+  if (sizes.length === 0) return null
+  return (
+    <div className="tag-group recent" role="group" aria-labelledby={labelId}>
+      <span className="tag-group__label" id={labelId}>
+        Zuletzt gesucht
+      </span>
+      <div className="tag-group__tags">
+        {sizes.map((s) => (
+          <button
+            key={sizeLabel(s)}
+            type="button"
+            className="tag recent__size"
+            onClick={() => onPick(s)}
+          >
+            {sizeLabel(s)}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export function SearchForm({
   onSearch,
   onQuantityChange,
+  recentSizes = [],
 }: {
   onSearch: (query: SearchQuery, shops: ShopId[]) => void
   /** Tells the app the marked quantity at once, so a tick uses it without a new search (AC31). */
   onQuantityChange?: (quantity: number) => void
+  /** Last searched sizes, newest first (AC53). */
+  recentSizes?: TyreSize[]
 }) {
   const [provider, setProvider] = useState('beide')
   const [width, setWidth] = useState(DEFAULTS.width)
   const [height, setHeight] = useState(DEFAULTS.height)
   const [rim, setRim] = useState(DEFAULTS.rim)
   const [quantity, setQuantity] = useState(DEFAULTS.quantity)
-  const [seasons, setSeasons] = useState<Season[]>([])
+  // the season of the time of year is ticked when the page opens (AC54)
+  const [seasons, setSeasons] = useState<Season[]>(() => seasonForDate(new Date()))
   const [brands, setBrands] = useState<string[]>([])
+
+  const submit = (size: TyreSize) => {
+    const shops = provider === 'beide' ? [...SHOPS] : SHOPS.filter((s) => s === provider)
+    onSearch({ ...size, quantity, seasons, brands }, shops)
+  }
+
+  const pick = (size: TyreSize) => {
+    setWidth(size.width)
+    setHeight(size.height)
+    setRim(size.rim)
+    submit(size)
+  }
 
   return (
     <form
       className="search"
       onSubmit={(e) => {
         e.preventDefault()
-        const shops = provider === 'beide' ? [...SHOPS] : SHOPS.filter((s) => s === provider)
-        onSearch({ width, height, rim, quantity, seasons, brands }, shops)
+        submit({ width, height, rim })
       }}
     >
       <TagGroup
@@ -88,6 +130,7 @@ export function SearchForm({
         </span>
         <SizeSelect id="rim" label="Zoll" values={RIMS} value={rim} onChange={setRim} />
       </div>
+      <RecentSizes sizes={recentSizes} onPick={pick} />
       <TagGroup
         label="Stückzahl"
         mode="single"

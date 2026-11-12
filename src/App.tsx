@@ -21,10 +21,13 @@ import {
   type SettingsApi,
 } from './api.ts'
 import { CodePrompt } from './components/CodePrompt.tsx'
+import { ListTools } from './components/ListTools.tsx'
 import { offerKey, ResultList } from './components/ResultList.tsx'
 import { SearchForm } from './components/SearchForm.tsx'
 import { Selection, type CartEntry } from './components/Selection.tsx'
 import { SettingsDialog } from './components/SettingsDialog.tsx'
+import { applyView, DEFAULT_VIEW, type ListView } from './list-view.ts'
+import { loadRecentSizes, rememberSize } from './recent-sizes.ts'
 import { errorMessage, SHOP_LABEL, SHOP_URL } from './messages.ts'
 import { DEFAULTS, SEASON_OPTIONS } from './options.ts'
 import { downloadOfferPdf } from './pdf/download.ts'
@@ -129,6 +132,10 @@ export function App({
   // Search (id) whose waiting time for the slower shop is over (AC48).
   const [holdOver, setHoldOver] = useState(0)
   const [collapsed, setCollapsed] = useState(false)
+  // Order and filters of the list; kept across searches until the page is reloaded (AC52).
+  const [view, setView] = useState<ListView>(DEFAULT_VIEW)
+  // Last searched sizes, kept in this browser (AC53).
+  const [recentSizes, setRecentSizes] = useState(loadRecentSizes)
   const latest = useRef(0)
 
   const groups = useMemo(
@@ -166,6 +173,7 @@ export function App({
     return () => clearTimeout(timer)
   }, [holding, searchId, holdMs])
   const listVisible = loading === 0 || (answered > 0 && holdOver === searchId)
+  const shownGroups = useMemo(() => applyView(groups, view), [groups, view])
 
   useEffect(() => {
     if (!code) return
@@ -267,6 +275,7 @@ export function App({
   const runSearch = (query: SearchQuery, selected: ShopId[]) => {
     const id = ++latest.current
     setLastSearch({ id, query, shops: selected })
+    setRecentSizes(rememberSize(query))
     setCollapsed(true)
     // Bring summary + results into view (phones: the form above has just folded away).
     document.documentElement.scrollTop = 0
@@ -382,7 +391,11 @@ export function App({
                 </button>
               </div>
             )}
-            <SearchForm onSearch={runSearch} onQuantityChange={setFilterQuantity} />
+            <SearchForm
+              onSearch={runSearch}
+              onQuantityChange={setFilterQuantity}
+              recentSizes={recentSizes}
+            />
           </aside>
           {/* own area for the ticked tyres: wide PC right screen edge, otherwise above the list */}
           <Selection
@@ -427,10 +440,22 @@ export function App({
                   ' Für den direkten Preisvergleich eine Marke wählen.'}
               </p>
             )}
+            {listVisible && groups.length > 0 && (
+              <ListTools
+                view={view}
+                onChange={setView}
+                shown={shownGroups.length}
+                total={groups.length}
+              />
+            )}
+            {listVisible && groups.length > 0 && shownGroups.length === 0 && (
+              <p className="list-empty">Kein Reifen passt zu diesen Filtern.</p>
+            )}
             <ResultList
-              groups={listVisible ? groups : []}
+              groups={listVisible ? shownGroups : []}
               selected={selectedKeys}
               onToggle={toggle}
+              quantity={lastSearch?.query.quantity}
             />
           </section>
         </div>

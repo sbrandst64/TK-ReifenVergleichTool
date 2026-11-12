@@ -309,6 +309,13 @@ input {
   gap: 6px;
 }
 
+/* last searched sizes (AC53): smaller tags under the size, one tap searches */
+.recent__size {
+  padding-inline: 10px;
+  font-size: 0.9375rem;
+  font-variant-numeric: tabular-nums;
+}
+
 .size__sep {
   padding-bottom: 10px;
   color: var(--muted);
@@ -518,6 +525,36 @@ input:focus-visible {
   font-size: 0.9375rem;
 }
 
+/* order and filters above the list (AC52): two tag rows and the count, wrapping on phones */
+.list-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 20px;
+  margin: 12px 0 0;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.list-tools .tag-group__label {
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+.list-tools__count {
+  margin: 0 0 0 auto;
+  padding-bottom: 10px;
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.list-empty {
+  margin: 16px 0 0;
+  color: var(--muted);
+}
+
 /* ---------- results ---------- */
 .tyre {
   padding: 14px 0;
@@ -612,11 +649,23 @@ input:focus-visible {
 
 .offer__price {
   grid-area: price;
-  font-size: 1.125rem;
-  font-weight: 700;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
   font-variant-numeric: tabular-nums;
   text-align: right;
   white-space: nowrap;
+}
+
+.offer__unit {
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+/* price of the whole set for the searched quantity (AC51) */
+.offer__set {
+  color: var(--muted);
+  font-size: 0.8125rem;
 }
 
 .offer--best {

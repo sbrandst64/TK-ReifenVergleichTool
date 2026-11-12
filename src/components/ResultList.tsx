@@ -67,9 +67,16 @@ interface Selectable {
   /** Keys (offerKey) of the ticked offers. */
   selected?: ReadonlySet<string>
   onToggle?: (offer: TireOffer) => void
+  /** Searched quantity: the price of the whole set stands under the unit price (AC51). */
+  quantity?: number
 }
 
-function TyreGroup({ group, selected, onToggle }: { group: OfferGroup } & Selectable) {
+function TyreGroup({
+  group,
+  selected,
+  onToggle,
+  quantity = 1,
+}: { group: OfferGroup } & Selectable) {
   const first = group.offers[0]
   const compare = group.offers.length > 1
   const season = seasonLabel(group.offers.find((o) => o.season)?.season ?? null)
@@ -132,7 +139,14 @@ function TyreGroup({ group, selected, onToggle }: { group: OfferGroup } & Select
                 )}
               </span>
               {rating && <Rating rating={rating} />}
-              <span className="offer__price">{formatEuro(o.priceGrossCents)}</span>
+              <span className="offer__price">
+                <span className="offer__unit">{formatEuro(o.priceGrossCents)}</span>
+                {quantity > 1 && (
+                  <span className="offer__set">
+                    {quantity} Stk: {formatEuro(quantity * o.priceGrossCents)}
+                  </span>
+                )}
+              </span>
             </li>
           )
         })}
@@ -141,12 +155,23 @@ function TyreGroup({ group, selected, onToggle }: { group: OfferGroup } & Select
   )
 }
 
-export function ResultList({ groups, selected, onToggle }: { groups: OfferGroup[] } & Selectable) {
+export function ResultList({
+  groups,
+  selected,
+  onToggle,
+  quantity,
+}: { groups: OfferGroup[] } & Selectable) {
   if (groups.length === 0) return null
   return (
     <div className="results">
       {groups.map((g) => (
-        <TyreGroup key={g.id} group={g} selected={selected} onToggle={onToggle} />
+        <TyreGroup
+          key={g.id}
+          group={g}
+          selected={selected}
+          onToggle={onToggle}
+          quantity={quantity}
+        />
       ))}
     </div>
   )
